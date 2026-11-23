@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
 <style>
-/* Mise en page : en-tête, barre « Noter » toujours visible, onglets (Aujourd'hui, À trier, Objectifs, Idées, Semaine) ; tableau de bord en trois colonnes sur iPad horizontal, deux en vertical, une sur téléphone. */
+/* Mise en page : en-tête, barre « Noter » toujours visible, onglets (Aujourd'hui, Semaine, Thèmes, À trier) ; chaque thème a son tableau de bord. Trois colonnes sur iPad horizontal, deux en vertical, une sur téléphone. */
 :root{
   color-scheme:light;
   --bg:#ECEFF3; --panel:#FFFFFF; --sunk:#F3F5F8; --ink:#131B25; --muted:#5A6777; --line:#D6DCE3;
@@ -121,8 +121,6 @@ h2 small{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--mu
 .empty{color:var(--muted);font-size:14px;margin:4px 0}
 .hint{color:var(--muted);font-size:13px;margin:0}
 .tag{font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px;white-space:nowrap;font-weight:500}
-.view-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.vh{margin:0;font-family:var(--f-display);font-size:22px;font-weight:700}
 .empty-state{color:var(--muted)}
 .empty-state strong{color:var(--ink)}
 
@@ -209,7 +207,7 @@ h2 small{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--mu
 .what span:last-child{font-size:12.5px;color:var(--muted)}
 
 /* À trier */
-.notes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.notes{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
 .note{background:var(--sunk);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .note-text{margin:0;font-size:16px;font-weight:500;overflow-wrap:anywhere;white-space:pre-wrap}
 .note-meta{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12.5px;color:var(--muted)}
@@ -219,8 +217,34 @@ h2 small{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--mu
 .danger{border:1px solid var(--late);background:transparent;color:var(--late);border-radius:10px;padding:8px 12px;font-size:14px;font-weight:600;min-height:40px}
 .danger.armed{background:var(--late);color:var(--on-late)}
 
+/* Thèmes : vue d'ensemble */
+.dsec{display:flex;flex-direction:column;gap:10px}
+.dsec + .dsec{margin-top:10px}
+.dsec-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.dsec-h h2{margin:0;font-size:20px}
+.gh{display:inline-flex;align-items:center;gap:8px}
+.gh .dot{width:11px;height:11px}
+.tcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:12px}
+.tcard{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;min-height:124px;min-width:0}
+.tcard:hover{border-color:var(--k)}
+.tcard-name{font-family:var(--f-display);font-weight:700;font-size:17px;line-height:1.2;display:flex;align-items:center;gap:8px;overflow-wrap:anywhere}
+.tcard-name .dot{width:10px;height:10px}
+.tcard.loose .tcard-name{color:var(--muted)}
+.tcard-meta{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.tcard-next{font-size:13px;overflow-wrap:anywhere}
+.tcard .tprog{margin-top:auto;display:flex;align-items:center;gap:8px}
+.tcard .tprog .bar{flex:1;margin:0}
+
+/* Thèmes : tableau de bord d'un thème */
+.dash-head{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap}
+.crumb{display:flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:700;font-size:22px;flex-wrap:wrap;min-width:0}
+.crumb .sep{color:var(--muted);font-weight:500}
+.crumb .dom{color:var(--k)}
+.dash-actions{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.dash-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;align-items:start}
+.dash-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+
 /* Objectifs */
-.ocards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px;align-items:start}
 .ocard{display:flex;flex-direction:column;gap:8px}
 .ocard-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .ocard-h .icon-btn{margin-left:auto}
@@ -231,9 +255,6 @@ h2 small{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--mu
 .donelist .task{opacity:.7}
 
 /* Idées */
-.igroups{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px;align-items:start}
-.gh{display:inline-flex;align-items:center;gap:8px}
-.gh .dot{width:11px;height:11px}
 .ideas{list-style:none;margin:0;padding:0}
 .idea{display:flex;align-items:center;gap:8px 10px;padding:8px 0;border-top:1px solid var(--line);flex-wrap:wrap}
 .idea:first-child{border-top:0}
@@ -270,9 +291,14 @@ textarea.in{resize:vertical;min-height:48px}
 .err{color:var(--late);font-size:13px;margin:0}
 .sheet-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:4px}
 .sheet-actions .spacer{flex:1}
-.setrow{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--line)}
-.setrow:first-child{border-top:0}
+.domblock{padding:10px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.domblock:first-child{border-top:0;padding-top:2px}
+.setrow{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap}
 .setrow .in{flex:1 1 160px;width:auto;padding:8px 10px}
+.themelist{display:flex;flex-direction:column;gap:6px;padding-left:18px;border-left:2px solid var(--line);margin-left:12px}
+.throw{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.throw .in{flex:1 1 150px;width:auto;padding:6px 10px;font-size:15px}
+.throw .danger{min-height:34px;padding:4px 10px;font-size:13px}
 .swatches{display:flex;gap:6px}
 .swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;background:var(--k);padding:0}
 .swatch[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--panel)}
@@ -286,6 +312,9 @@ textarea.in{resize:vertical;min-height:48px}
   .col-tasks{grid-area:tasks} .col-day{grid-area:day} .col-horizon{grid-area:horizon}
   .week{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+@media (max-width:860px){
+  .dash-grid{grid-template-columns:minmax(0,1fr)}
+}
 @media (max-width:640px){
   .grid-jour{grid-template-columns:minmax(0,1fr);grid-template-areas:"tasks" "horizon" "day"}
   .week{grid-template-columns:minmax(0,1fr)}
@@ -293,6 +322,7 @@ textarea.in{resize:vertical;min-height:48px}
   .cap-label{flex-basis:100%;padding-top:0}
   .capture .primary{flex:1 1 100%}
   .tabs{display:flex;width:100%}
+  .dash-actions{margin-left:0}
 }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
@@ -322,10 +352,9 @@ textarea.in{resize:vertical;min-height:48px}
   <nav class="controls" aria-label="Affichage">
     <div class="tabs" role="tablist" aria-label="Vue">
       <button type="button" role="tab" id="tab-jour" data-view="jour" aria-selected="true">Aujourd'hui</button>
-      <button type="button" role="tab" id="tab-trier" data-view="trier" aria-selected="false">À trier <span class="count" id="trierCount"></span></button>
-      <button type="button" role="tab" id="tab-objectifs" data-view="objectifs" aria-selected="false">Objectifs</button>
-      <button type="button" role="tab" id="tab-idees" data-view="idees" aria-selected="false">Idées</button>
       <button type="button" role="tab" id="tab-semaine" data-view="semaine" aria-selected="false">Semaine</button>
+      <button type="button" role="tab" id="tab-themes" data-view="themes" aria-selected="false">Thèmes</button>
+      <button type="button" role="tab" id="tab-trier" data-view="trier" aria-selected="false">À trier <span class="count" id="trierCount"></span></button>
     </div>
     <div class="chips" id="chips" role="group" aria-label="Domaine"></div>
   </nav>
@@ -347,7 +376,7 @@ textarea.in{resize:vertical;min-height:48px}
         <section class="panel col-horizon">
           <h2><span>À trier</span><small id="inboxCount"></small></h2>
           <div id="inboxMini"></div>
-          <h2><span>Objectifs</span><button type="button" class="linkish" data-goto="objectifs">Tout voir</button></h2>
+          <h2><span>Objectifs</span><button type="button" class="linkish" data-goto="themes">Voir les thèmes</button></h2>
           <div class="gm" id="goalsMini"></div>
           <h2>Échéances</h2>
           <ol class="dl" id="deadlines"></ol>
@@ -355,27 +384,20 @@ textarea.in{resize:vertical;min-height:48px}
       </div>
     </section>
 
+    <section id="view-semaine" class="view" role="tabpanel" aria-labelledby="tab-semaine" hidden>
+      <div class="week" id="week"></div>
+    </section>
+
+    <section id="view-themes" class="view" role="tabpanel" aria-labelledby="tab-themes" hidden>
+      <div id="themesBox" class="view"></div>
+    </section>
+
     <section id="view-trier" class="view" role="tabpanel" aria-labelledby="tab-trier" hidden>
       <div class="panel">
         <h2><span>À trier</span><small id="trierHead"></small></h2>
-        <p class="hint">Pour chaque note : en faire une tâche, une idée, ou la supprimer. L'appli propose un domaine et une date, tu valides ou tu corriges.</p>
-        <ul class="notes" id="notesList" style="margin-top:12px"></ul>
+        <p class="hint">Pour chaque note : en faire une tâche, une idée, ou la supprimer. L'appli propose un domaine, un thème et une date, tu valides ou tu corriges.</p>
+        <ul class="notes" id="notesList"></ul>
       </div>
-    </section>
-
-    <section id="view-objectifs" class="view" role="tabpanel" aria-labelledby="tab-objectifs" hidden>
-      <div class="view-head"><h2 class="vh">Objectifs</h2><button type="button" class="primary small" data-add="objective">+ Objectif</button></div>
-      <div class="ocards" id="objCards"></div>
-      <div class="panel" id="looseTasks"></div>
-    </section>
-
-    <section id="view-idees" class="view" role="tabpanel" aria-labelledby="tab-idees" hidden>
-      <div class="view-head"><h2 class="vh">Idées</h2><button type="button" class="primary small" data-add="idea">+ Idée</button></div>
-      <div class="igroups" id="ideaGroups"></div>
-    </section>
-
-    <section id="view-semaine" class="view" role="tabpanel" aria-labelledby="tab-semaine" hidden>
-      <div class="week" id="week"></div>
     </section>
   </main>
 
@@ -388,7 +410,7 @@ textarea.in{resize:vertical;min-height:48px}
 (function () {
   "use strict";
 
-  const STORE = "cockpit.v2", STORE_V1 = "cockpit.v1";
+  const STORE = "cockpit.v3", STORE_V2 = "cockpit.v2", STORE_V1 = "cockpit.v1";
   const COLORS = ["blue", "teal", "amber", "pink", "violet", "slate"];
   const COLOR_NAMES = { blue: "Bleu", teal: "Vert", amber: "Orange", pink: "Rose", violet: "Violet", slate: "Gris" };
   const DEFAULT_DOMAINS = [
@@ -397,6 +419,11 @@ textarea.in{resize:vertical;min-height:48px}
     { id: "stage", label: "Stage & 3A", color: "amber" },
     { id: "perso", label: "Perso", color: "pink" }
   ];
+  const DEFAULT_THEMES = {
+    junior: ["Partenariats", "Prospection", "Communication"],
+    cours: ["Anglais", "BE Automatique SEM", "Computer science", "Energy economics", "Modelling & Dispatch of Smart Power", "Stratégie d'entreprise"],
+    stage: ["Stage 2A", "Mobilité 3A"]
+  };
   const V1_EXAMPLES = new Set([
     "Relancer un partenaire pour obtenir des contacts", "Envoyer le compte rendu mensuel à l'école",
     "Faire le planning de révision des partiels", "Trancher les fiches prioritaires de la relance clients",
@@ -407,6 +434,7 @@ textarea.in{resize:vertical;min-height:48px}
   const ICONS = {
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
     check: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4l2.4 2.4 5.2-5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
   const $ = (s) => document.querySelector(s);
@@ -447,6 +475,7 @@ textarea.in{resize:vertical;min-height:48px}
   const nowIso = () => new Date().toISOString();
   const uid = () => (window.crypto && typeof crypto.randomUUID === "function") ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
   const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  const plural = (n, one, many) => n + " " + (n > 1 ? many : one);
   function isoWeek(d) {
     const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     const day = t.getUTCDay() || 7;
@@ -487,42 +516,86 @@ textarea.in{resize:vertical;min-height:48px}
   const allDayEvents = () => [{ date: iso(addDays(monday, 3)), title: "Atelier avec un partenaire", d: "junior" }];
 
   /* Données */
-  function mkTask(p) { return { id: uid(), title: p.title, d: p.d, due: p.due || null, dur: p.dur || null, obj: p.obj || null, done: !!p.done, doneAt: p.done ? nowIso() : null, ex: !!p.ex, created: nowIso(), upd: nowIso() }; }
+  function mkTask(p) { return { id: uid(), title: p.title, d: p.d, th: p.th || null, due: p.due || null, dur: p.dur || null, obj: p.obj || null, done: !!p.done, doneAt: p.done ? nowIso() : null, ex: !!p.ex, created: nowIso(), upd: nowIso() }; }
   function mkNote(text, ex) { return { id: uid(), text: text, ex: !!ex, created: nowIso(), upd: nowIso() }; }
-  function mkIdea(p) { return { id: uid(), text: p.text, d: p.d, ex: !!p.ex, created: nowIso(), upd: nowIso() }; }
-  function mkObj(p) { return { id: uid(), title: p.title, d: p.d, due: p.due || null, ex: !!p.ex, created: nowIso(), upd: nowIso() }; }
-  function defaults() { return { v: 2, domains: DEFAULT_DOMAINS.map((d) => Object.assign({}, d)), notes: [], ideas: [], objectives: [], tasks: [], settings: { theme: "light" } }; }
+  function mkIdea(p) { return { id: uid(), text: p.text, d: p.d, th: p.th || null, ex: !!p.ex, created: nowIso(), upd: nowIso() }; }
+  function mkObj(p) { return { id: uid(), title: p.title, d: p.d, th: p.th || null, due: p.due || null, ex: !!p.ex, created: nowIso(), upd: nowIso() }; }
+  function mkTheme(d, label) { return { id: uid(), d: d, label: label, created: nowIso(), upd: nowIso() }; }
+  function defaultThemesFor(domains) {
+    const out = [];
+    domains.forEach((d) => (DEFAULT_THEMES[d.id] || []).forEach((label) => out.push(mkTheme(d.id, label))));
+    return out;
+  }
+  function defaults() {
+    const doms = DEFAULT_DOMAINS.map((d) => Object.assign({}, d));
+    return { v: 3, domains: doms, themes: defaultThemesFor(doms), notes: [], ideas: [], objectives: [], tasks: [], settings: { theme: "light" } };
+  }
 
   function seedExamples(s) {
     const rel = (n) => iso(addDays(today, n));
-    const o1 = mkObj({ title: "Signer 2 études avec le partenaire", d: "junior", due: rel(120), ex: true });
-    const o2 = mkObj({ title: "Réviser les matières avant les partiels", d: "cours", due: rel(45), ex: true });
-    const o3 = mkObj({ title: "Préparer le dossier de mobilité 3A", d: "stage", due: rel(60), ex: true });
-    s.objectives.push(o1, o2, o3);
-    s.tasks.push(
-      mkTask({ title: "Envoyer la convention signée", d: "junior", due: rel(-5), obj: o1.id, done: true, ex: true }),
-      mkTask({ title: "Relancer le partenaire pour obtenir des contacts", d: "junior", due: rel(-2), obj: o1.id, dur: 15, ex: true }),
-      mkTask({ title: "Préparer l'atelier avec le partenaire", d: "junior", due: rel(2), obj: o1.id, dur: 60, ex: true }),
-      mkTask({ title: "Envoyer la plaquette aux ingénieurs", d: "junior", due: rel(6), obj: o1.id, dur: 30, ex: true }),
-      mkTask({ title: "Faire le planning de révision", d: "cours", due: rel(0), obj: o2.id, dur: 30, ex: true }),
-      mkTask({ title: "Réviser Energy economics", d: "cours", due: rel(5), obj: o2.id, dur: 120, ex: true }),
-      mkTask({ title: "Réviser Computer science", d: "cours", due: rel(8), obj: o2.id, dur: 120, ex: true }),
-      mkTask({ title: "Mettre le CV à jour", d: "stage", due: rel(3), obj: o3.id, dur: 60, ex: true }),
-      mkTask({ title: "Lister des universités en Scandinavie", d: "stage", due: rel(9), obj: o3.id, dur: 60, ex: true }),
-      mkTask({ title: "Envoyer le compte rendu mensuel à l'école", d: "junior", due: rel(0), dur: 30, ex: true }),
-      mkTask({ title: "Faire les courses", d: "perso", due: rel(1), ex: true }),
-      mkTask({ title: "Payer le loyer", d: "perso", due: rel(7), dur: 15, ex: true })
-    );
+    const th = (d, label) => { const t = s.themes.find((x) => x.d === d && x.label === label); return t ? t.id : null; };
+    const has = (d) => s.domains.some((x) => x.id === d);
+    if (has("junior")) {
+      const part = th("junior", "Partenariats"), pros = th("junior", "Prospection"), com = th("junior", "Communication");
+      const o1 = mkObj({ title: "Signer 2 études avec le partenaire", d: "junior", th: part, due: rel(120), ex: true });
+      const o2 = mkObj({ title: "Publier 12 posts LinkedIn d'ici mars", d: "junior", th: com, due: rel(100), ex: true });
+      const o3 = mkObj({ title: "Décrocher 8 rendez-vous ce mois-ci", d: "junior", th: pros, due: rel(30), ex: true });
+      s.objectives.push(o1, o2, o3);
+      s.tasks.push(
+        mkTask({ title: "Envoyer la convention signée", d: "junior", th: part, due: rel(-5), obj: o1.id, done: true, ex: true }),
+        mkTask({ title: "Relancer le partenaire pour obtenir des contacts", d: "junior", th: part, due: rel(-2), obj: o1.id, dur: 15, ex: true }),
+        mkTask({ title: "Préparer l'atelier avec le partenaire", d: "junior", th: part, due: rel(2), obj: o1.id, dur: 60, ex: true }),
+        mkTask({ title: "Post de rentrée", d: "junior", th: com, due: rel(-10), obj: o2.id, done: true, ex: true }),
+        mkTask({ title: "Post sur une étude passée", d: "junior", th: com, due: rel(3), obj: o2.id, dur: 60, ex: true }),
+        mkTask({ title: "Post recrutement", d: "junior", th: com, due: rel(7), obj: o2.id, dur: 45, ex: true }),
+        mkTask({ title: "Refaire la bannière LinkedIn", d: "junior", th: com, ex: true }),
+        mkTask({ title: "Relancer les prospects du salon", d: "junior", th: pros, due: rel(1), obj: o3.id, dur: 60, ex: true }),
+        mkTask({ title: "Appeler 5 entreprises de la liste", d: "junior", th: pros, due: rel(4), obj: o3.id, dur: 60, ex: true }),
+        mkTask({ title: "Envoyer le compte rendu mensuel à l'école", d: "junior", due: rel(0), dur: 30, ex: true })
+      );
+      s.ideas.push(
+        mkIdea({ text: "Proposer des articles techniques écrits par des élèves", d: "junior", th: part, ex: true }),
+        mkIdea({ text: "Série « une étude, un post »", d: "junior", th: com, ex: true })
+      );
+    }
+    if (has("cours")) {
+      const o = mkObj({ title: "Réviser les matières avant les partiels", d: "cours", due: rel(45), ex: true });
+      s.objectives.push(o);
+      s.tasks.push(
+        mkTask({ title: "Faire le planning de révision", d: "cours", due: rel(0), obj: o.id, dur: 30, ex: true }),
+        mkTask({ title: "Réviser Energy economics", d: "cours", th: th("cours", "Energy economics"), due: rel(5), obj: o.id, dur: 120, ex: true }),
+        mkTask({ title: "Réviser Computer science", d: "cours", th: th("cours", "Computer science"), due: rel(8), obj: o.id, dur: 120, ex: true })
+      );
+    }
+    if (has("stage")) {
+      const mob = th("stage", "Mobilité 3A");
+      const o = mkObj({ title: "Préparer le dossier de mobilité 3A", d: "stage", th: mob, due: rel(60), ex: true });
+      s.objectives.push(o);
+      s.tasks.push(
+        mkTask({ title: "Lister des universités en Scandinavie", d: "stage", th: mob, due: rel(9), obj: o.id, dur: 60, ex: true }),
+        mkTask({ title: "Mettre le CV à jour", d: "stage", th: th("stage", "Stage 2A"), due: rel(3), dur: 60, ex: true })
+      );
+    }
+    if (has("perso")) {
+      s.tasks.push(
+        mkTask({ title: "Faire les courses", d: "perso", due: rel(1), ex: true }),
+        mkTask({ title: "Payer le loyer", d: "perso", due: rel(7), dur: 15, ex: true })
+      );
+      s.ideas.push(mkIdea({ text: "Tester un club de sport près de l'école", d: "perso", ex: true }));
+    }
     s.notes.push(
       mkNote("Idée pour le bureau : un point mensuel sur les relances", true),
       mkNote("relancer le partenaire lundi, préparer la réunion du pôle jeudi", true),
       mkNote("Appeler la banque demain", true)
     );
-    s.ideas.push(
-      mkIdea({ text: "Proposer des articles techniques écrits par des élèves", d: "junior", ex: true }),
-      mkIdea({ text: "Un post LinkedIn sur une étude passée", d: "junior", ex: true }),
-      mkIdea({ text: "Tester un club de sport près de l'école", d: "perso", ex: true })
-    );
+  }
+  function removeExamplesFrom(s) {
+    const exObj = new Set(s.objectives.filter((o) => o.ex).map((o) => o.id));
+    s.objectives = s.objectives.filter((o) => !o.ex);
+    s.tasks = s.tasks.filter((t) => !t.ex);
+    s.tasks.forEach((t) => { if (exObj.has(t.obj)) { t.obj = null; t.upd = nowIso(); } });
+    s.notes = s.notes.filter((n) => !n.ex);
+    s.ideas = s.ideas.filter((i) => !i.ex);
   }
 
   function sanitize(d) {
@@ -536,29 +609,45 @@ textarea.in{resize:vertical;min-height:48px}
     const domIds = new Set(s.domains.map((x) => x.id));
     const fixD = (v) => (domIds.has(v) ? v : s.domains[0].id);
     const base = (x) => ({ id: str(x.id, 64) || uid(), ex: !!x.ex, created: str(x.created, 40) || nowIso(), upd: str(x.upd, 40) || nowIso() });
+    s.themes = (Array.isArray(d.themes) ? d.themes : []).filter((x) => x && typeof x.id === "string" && x.id && domIds.has(x.d) && str(x.label, 60).trim())
+      .map((x) => ({ id: x.id.slice(0, 64), d: x.d, label: str(x.label, 60), created: str(x.created, 40) || nowIso(), upd: str(x.upd, 40) || nowIso() }));
+    const thDom = new Map(s.themes.map((t) => [t.id, t.d]));
+    const fixTh = (th, dd) => (th && thDom.get(th) === dd ? th : null);
     s.notes = (Array.isArray(d.notes) ? d.notes : []).filter((x) => x && str(x.text, 4000).trim())
       .map((x) => Object.assign(base(x), { text: str(x.text, 4000) }));
     s.ideas = (Array.isArray(d.ideas) ? d.ideas : []).filter((x) => x && str(x.text, 2000).trim())
-      .map((x) => Object.assign(base(x), { text: str(x.text, 2000), d: fixD(x.d) }));
+      .map((x) => { const dd = fixD(x.d); return Object.assign(base(x), { text: str(x.text, 2000), d: dd, th: fixTh(x.th, dd) }); });
     s.objectives = (Array.isArray(d.objectives) ? d.objectives : []).filter((x) => x && str(x.title, 300).trim())
-      .map((x) => Object.assign(base(x), { title: str(x.title, 300), d: fixD(x.d), due: validIso(x.due) }));
+      .map((x) => { const dd = fixD(x.d); return Object.assign(base(x), { title: str(x.title, 300), d: dd, th: fixTh(x.th, dd), due: validIso(x.due) }); });
     const objIds = new Set(s.objectives.map((o) => o.id));
     s.tasks = (Array.isArray(d.tasks) ? d.tasks : []).filter((x) => x && str(x.title, 300).trim())
-      .map((x) => Object.assign(base(x), {
-        title: str(x.title, 300), d: fixD(x.d), due: validIso(x.due),
-        dur: (typeof x.dur === "number" && x.dur > 0 && x.dur <= 1440) ? x.dur : null,
-        obj: objIds.has(x.obj) ? x.obj : null, done: !!x.done, doneAt: x.done ? (str(x.doneAt, 40) || null) : null
-      }));
-    const th = d.settings && d.settings.theme;
-    s.settings.theme = ["light", "dark", "auto"].includes(th) ? th : "light";
+      .map((x) => {
+        const dd = fixD(x.d);
+        return Object.assign(base(x), {
+          title: str(x.title, 300), d: dd, th: fixTh(x.th, dd), due: validIso(x.due),
+          dur: (typeof x.dur === "number" && x.dur > 0 && x.dur <= 1440) ? x.dur : null,
+          obj: objIds.has(x.obj) ? x.obj : null, done: !!x.done, doneAt: x.done ? (str(x.doneAt, 40) || null) : null
+        });
+      });
+    const thm = d.settings && d.settings.theme;
+    s.settings.theme = ["light", "dark", "auto"].includes(thm) ? thm : "light";
     return s;
   }
-
+  function migrateV2(d2) {
+    const s = sanitize(Object.assign({}, d2, { themes: [] }));
+    s.themes = defaultThemesFor(s.domains);
+    if ([s.tasks, s.notes, s.ideas, s.objectives].some((a) => a.some((x) => x.ex))) { removeExamplesFrom(s); seedExamples(s); }
+    return s;
+  }
   function load() {
     try {
       const raw = localStorage.getItem(STORE);
-      if (raw) { const d = JSON.parse(raw); if (d && d.v === 2) return sanitize(d); }
-    } catch (e) { /* données illisibles : on repart des valeurs par défaut */ }
+      if (raw) { const d = JSON.parse(raw); if (d && d.v === 3) return sanitize(d); }
+    } catch (e) { /* illisible : on essaie l'ancienne version */ }
+    try {
+      const raw2 = localStorage.getItem(STORE_V2);
+      if (raw2) { const d2 = JSON.parse(raw2); if (d2 && d2.v === 2) return migrateV2(d2); }
+    } catch (e) { /* illisible : on repart des valeurs par défaut */ }
     const s = defaults();
     try {
       const raw1 = localStorage.getItem(STORE_V1);
@@ -569,7 +658,7 @@ textarea.in{resize:vertical;min-height:48px}
           s.tasks.push(mkTask({ title: t.title.slice(0, 300), d: DEFAULT_DOMAINS.some((x) => x.id === t.d) ? t.d : "perso", due: validIso(t.due), done: !!t.done }));
         });
       }
-    } catch (e) { /* ancienne version illisible : ignorée */ }
+    } catch (e) { /* première version illisible : ignorée */ }
     seedExamples(s);
     return s;
   }
@@ -578,16 +667,19 @@ textarea.in{resize:vertical;min-height:48px}
   save();
 
   /* Petites aides */
-  let view = "jour", filter = "tout", showDone = false;
+  let view = "jour", filter = "tout", showDone = false, themeSel = null;
   const fresh = new Set();
   const markFresh = (id) => { fresh.add(id); setTimeout(() => fresh.delete(id), 2200); };
   const dom = (id) => S.domains.find((d) => d.id === id) || { id: id, label: "Sans domaine", color: "slate" };
+  const theme = (id) => (id ? S.themes.find((t) => t.id === id) || null : null);
+  const scopeLabel = (x) => { const t = theme(x.th); return dom(x.d).label + (t ? " · " + t.label : ""); };
   const passD = (x) => filter === "tout" || x.d === filter;
   const domainOrDefault = (id) => (S.domains.some((d) => d.id === id) ? id : (filter !== "tout" && S.domains.some((d) => d.id === filter) ? filter : S.domains[0].id));
   const hasExamples = () => [S.tasks, S.notes, S.ideas, S.objectives].some((a) => a.some((x) => x.ex));
   const removeNote = (id) => { S.notes = S.notes.filter((n) => n.id !== id); };
   const removeIdea = (id) => { S.ideas = S.ideas.filter((n) => n.id !== id); };
   const byDue = (a, b) => { const x = a.due || "9999-99-99", y = b.due || "9999-99-99"; return x < y ? -1 : x > y ? 1 : 0; };
+  const byObjDue = (a, b) => { const x = a.due || "9999-99-99", y = b.due || "9999-99-99"; return x < y ? -1 : x > y ? 1 : a.title.localeCompare(b.title, "fr"); };
   const newest = (a, b) => (a.created < b.created ? 1 : a.created > b.created ? -1 : 0);
   const eventsFor = (d) => {
     const list = (PATTERN[(d.getDay() + 6) % 7] || []).map((e) => ({ s: e[0], e: e[1], title: e[2], d: e[3], allDay: false }));
@@ -611,8 +703,13 @@ textarea.in{resize:vertical;min-height:48px}
   /* Rangement sans IA : mots-clés et formats de date */
   const BUILTIN_KW = {
     stage: /(stage|\bcv\b|candidat|mobilit|\b3a\b|erasmus|lettre de motivation|entretien d'embauche|alternance|cesure)/,
-    junior: /(junior|partenaire|\bcrm\b|client|prospect|devis|relanc|plaquette|bureau|\bca\b|linkedin|etude|compte rendu|\bcr\b|reunion|pole)/,
+    junior: /(junior|partenaire|partenariat|\bcrm\b|client|prospect|devis|relanc|plaquette|bureau|\bca\b|linkedin|etude|compte rendu|\bcr\b|reunion|pole|\bpost\b)/,
     cours: /(partiel|revis|cours|\btd\b|\btp\b|\bbe\b|exam|rendu|devoir|anglais|chapitre)/
+  };
+  const THEME_KW = {
+    "partenariats": /(partenaire|partenariat|convention|mecenat|sponsor)/,
+    "prospection": /(prospect|relanc|rendez-vous|\brdv\b|devis|client|salon|appeler|demarch)/,
+    "communication": /(linkedin|\bpost\b|instagram|\binsta\b|site web|site internet|newsletter|visuel|canva|communication|\bcom\b|plaquette|banniere)/
   };
   function guessDomain(text) {
     const low = norm(text);
@@ -625,6 +722,16 @@ textarea.in{resize:vertical;min-height:48px}
       if (words.some((w) => low.includes(w))) return d.id;
     }
     return S.domains.some((d) => d.id === "perso") ? "perso" : S.domains[0].id;
+  }
+  function guessTheme(text, dId) {
+    const low = norm(text);
+    const ths = S.themes.filter((t) => t.d === dId);
+    for (const t of ths) { const kw = THEME_KW[norm(t.label)]; if (kw && kw.test(low)) return t.id; }
+    for (const t of ths) {
+      const words = norm(t.label).split(/[^a-z0-9]+/).filter((w) => w.length >= 4);
+      if (words.some((w) => new RegExp("\\b" + w).test(low))) return t.id;
+    }
+    return null;
   }
   const DAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
   const MONTHS = ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"];
@@ -681,7 +788,7 @@ textarea.in{resize:vertical;min-height:48px}
     t = t.replace(/\s+(pour|avant)\s*$/i, "");
     return cap(t.trim() || s.trim());
   }
-  const suggest = (text) => ({ title: cleanTitle(text), d: guessDomain(text), due: guessDue(text) });
+  const suggest = (text) => { const d = guessDomain(text); return { title: cleanTitle(text), d: d, th: guessTheme(text, d), due: guessDue(text) }; };
   const splitText = (text) => text.split(/[;\n]+|,\s*|\s+et\s+(?=[a-zàâçéèêëîïôûùüÿæœ])|\.\s+/i).map((x) => x.trim().replace(/\.$/, "")).filter((x) => x.length > 1);
 
   /* Éléments d'interface réutilisés */
@@ -693,14 +800,15 @@ textarea.in{resize:vertical;min-height:48px}
   function taskRow(t, opts) {
     opts = opts || {};
     if (opts.small) return h("li", { class: "tk" + (t.done ? " done" : "") }, checkBtn(t), h("button", { type: "button", class: "t-open", "data-open-task": t.id }, h("span", { class: "t-title", text: t.title })));
-    const d = dom(t.d), di = dueInfo(t.due);
+    const d = dom(t.d);
+    const di = t.done ? { text: t.due ? "Faite · " + fDM.format(fromIso(t.due)) : "Faite", cls: "" } : dueInfo(t.due);
     const o = t.obj && !opts.noObj ? S.objectives.find((x) => x.id === t.obj) : null;
     return h("li", { class: "task" + (t.done ? " done" : "") + (fresh.has(t.id) ? " fresh" : "") },
       checkBtn(t),
       h("button", { type: "button", class: "t-open", "data-open-task": t.id },
         h("span", { class: "t-title", text: t.title }),
         h("span", { class: "t-meta" },
-          h("span", { class: "dchip k-" + d.color, text: d.label }),
+          opts.noScope ? null : h("span", { class: "dchip k-" + d.color, text: scopeLabel(t) }),
           h("span", { class: "due " + di.cls, text: di.text }),
           t.dur ? h("span", { class: "dur", text: durLabel(t.dur) }) : null,
           o ? h("span", { class: "t-obj", text: "↳ " + o.title }) : null,
@@ -719,6 +827,20 @@ textarea.in{resize:vertical;min-height:48px}
     return row;
   }
   const domainChoices = () => S.domains.map((d) => ({ v: d.id, label: d.label, cls: "dchoice k-" + d.color }));
+  function themeField(st, onChange) {
+    const wrap = h("div");
+    let row = null;
+    function draw() {
+      wrap.textContent = "";
+      const ths = S.themes.filter((t) => t.d === st.d);
+      if (st.th && !ths.some((t) => t.id === st.th)) st.th = null;
+      if (!ths.length) { row = null; wrap.append(h("p", { class: "hint", text: "Aucun thème dans ce domaine. Tu peux en créer dans les réglages ou dans l'onglet Thèmes." })); return; }
+      row = choiceRow([{ v: null, label: "Aucun" }].concat(ths.map((t) => ({ v: t.id, label: t.label }))), st.th, (v) => { st.th = v; if (onChange) onChange(v); });
+      wrap.append(row);
+    }
+    draw();
+    return { el: wrap, redraw: draw };
+  }
   function field(label, nodes, forId) {
     return h("div", { class: "field" }, forId ? h("label", { class: "lab", for: forId, text: label }) : h("span", { class: "lab", text: label }), nodes);
   }
@@ -765,9 +887,9 @@ textarea.in{resize:vertical;min-height:48px}
   function openTaskDialog(task, preset) {
     preset = preset || {};
     const st = task
-      ? { title: task.title, d: task.d, due: task.due, dur: task.dur, obj: task.obj }
-      : { title: preset.title || "", d: domainOrDefault(preset.d), due: preset.due !== undefined ? preset.due : null, dur: preset.dur || null, obj: preset.obj || null };
-    if (st.obj) { const o = S.objectives.find((x) => x.id === st.obj); if (o) st.d = o.d; else st.obj = null; }
+      ? { title: task.title, d: task.d, th: task.th, due: task.due, dur: task.dur, obj: task.obj }
+      : { title: preset.title || "", d: domainOrDefault(preset.d), th: preset.th || null, due: preset.due !== undefined ? preset.due : null, dur: preset.dur || null, obj: preset.obj || null };
+    if (st.obj) { const o = S.objectives.find((x) => x.id === st.obj); if (o) { st.d = o.d; if (o.th) st.th = o.th; } else st.obj = null; }
     const titleIn = h("textarea", { id: "f-title", class: "in", rows: "2", placeholder: "Ex. Relancer le partenaire" });
     titleIn.value = st.title;
     const err = h("p", { class: "err", hidden: true }, "Donne un titre à la tâche.");
@@ -775,23 +897,35 @@ textarea.in{resize:vertical;min-height:48px}
     const fillObj = () => {
       objSel.textContent = "";
       objSel.append(h("option", { value: "" }, "Aucun objectif"));
-      S.objectives.slice().sort((a, b) => ((a.d === st.d ? 0 : 1) - (b.d === st.d ? 0 : 1)) || a.title.localeCompare(b.title, "fr")).forEach((o) => {
+      const score = (o) => (o.d === st.d ? 0 : 2) + (st.th && o.th === st.th ? 0 : 1);
+      S.objectives.slice().sort((a, b) => (score(a) - score(b)) || a.title.localeCompare(b.title, "fr")).forEach((o) => {
         const op = h("option", { value: o.id }, o.title + (o.d !== st.d ? " (" + dom(o.d).label + ")" : ""));
         if (o.id === st.obj) op.selected = true;
         objSel.append(op);
       });
     };
+    const thF = themeField(st, (v) => {
+      const o = st.obj && S.objectives.find((x) => x.id === st.obj);
+      if (o && o.th && o.th !== v) st.obj = null;
+      fillObj();
+    });
     const domRow = choiceRow(domainChoices(), st.d, (v) => {
       st.d = v;
       const o = st.obj && S.objectives.find((x) => x.id === st.obj);
       if (o && o.d !== v) st.obj = null;
+      thF.redraw();
       fillObj();
     });
     fillObj();
     objSel.addEventListener("change", () => {
       st.obj = objSel.value || null;
       const o = st.obj && S.objectives.find((x) => x.id === st.obj);
-      if (o && o.d !== st.d) { st.d = o.d; domRow.set(o.d); fillObj(); }
+      if (o) {
+        if (o.d !== st.d) { st.d = o.d; domRow.set(o.d); }
+        if (o.th) st.th = o.th;
+        thF.redraw();
+        fillObj();
+      }
     });
     const q = quickDates();
     const dateIn = h("input", { type: "date", id: "f-due", class: "in", "aria-label": "Date d'échéance" });
@@ -804,12 +938,13 @@ textarea.in{resize:vertical;min-height:48px}
     saveBtn.addEventListener("click", () => {
       const title = titleIn.value.trim();
       if (!title) { err.hidden = false; titleIn.focus(); return; }
-      if (task) Object.assign(task, { title: title.slice(0, 300), d: st.d, due: st.due, dur: st.dur, obj: st.obj, upd: nowIso() });
-      else { const t = mkTask({ title: title.slice(0, 300), d: st.d, due: st.due, dur: st.dur, obj: st.obj }); S.tasks.push(t); markFresh(t.id); }
+      const vals = { title: title.slice(0, 300), d: st.d, th: st.th, due: st.due, dur: st.dur, obj: st.obj };
+      if (task) Object.assign(task, vals, { upd: nowIso() });
+      else { const t = mkTask(vals); S.tasks.push(t); markFresh(t.id); }
       if (preset.fromNote) removeNote(preset.fromNote);
       if (preset.fromIdea) removeIdea(preset.fromIdea);
       save(); closeSheet(); renderAll();
-      toast(task ? "Tâche modifiée" : "Tâche ajoutée");
+      toast(task ? "Tâche modifiée" : "Tâche ajoutée dans " + scopeLabel(vals));
     });
     const actions = [saveBtn, cancelBtn()];
     if (task) actions.push(h("span", { class: "spacer" }), dangerButton("Supprimer", "Confirmer la suppression", () => {
@@ -819,6 +954,7 @@ textarea.in{resize:vertical;min-height:48px}
     openSheet(title, [
       field("Titre", [titleIn, err], "f-title"),
       field("Domaine", [domRow]),
+      field("Thème", [thF.el]),
       field("Objectif", [objSel], "f-obj"),
       field("Échéance", [dueRow, dateIn]),
       field("Durée prévue (facultatif)", [durRow])
@@ -829,11 +965,12 @@ textarea.in{resize:vertical;min-height:48px}
   /* Objectif : créer, modifier, supprimer */
   function openObjectiveDialog(obj, preset) {
     preset = preset || {};
-    const st = obj ? { title: obj.title, d: obj.d, due: obj.due } : { title: preset.title || "", d: domainOrDefault(preset.d), due: null };
+    const st = obj ? { title: obj.title, d: obj.d, th: obj.th, due: obj.due } : { title: preset.title || "", d: domainOrDefault(preset.d), th: preset.th || null, due: null };
     const titleIn = h("textarea", { id: "f-otitle", class: "in", rows: "2", placeholder: "Ex. Signer 2 études avant fin mars" });
     titleIn.value = st.title;
     const err = h("p", { class: "err", hidden: true }, "Donne un nom à l'objectif.");
-    const domRow = choiceRow(domainChoices(), st.d, (v) => { st.d = v; });
+    const thF = themeField(st, null);
+    const domRow = choiceRow(domainChoices(), st.d, (v) => { st.d = v; thF.redraw(); });
     const dateIn = h("input", { type: "date", id: "f-odue", class: "in", "aria-label": "Échéance de l'objectif" });
     dateIn.value = st.due || "";
     const dueRow = choiceRow([{ v: iso(addDays(today, 30)), label: "Dans 1 mois" }, { v: iso(addDays(today, 91)), label: "Dans 3 mois" }, { v: null, label: "Sans échéance" }], st.due, (v) => { st.due = v; dateIn.value = v || ""; });
@@ -844,9 +981,14 @@ textarea.in{resize:vertical;min-height:48px}
       const title = titleIn.value.trim();
       if (!title) { err.hidden = false; titleIn.focus(); return; }
       if (obj) {
-        Object.assign(obj, { title: title.slice(0, 300), d: st.d, due: st.due, upd: nowIso() });
-        S.tasks.forEach((t) => { if (t.obj === obj.id && t.d !== st.d) { t.d = st.d; t.upd = nowIso(); } });
-      } else S.objectives.push(mkObj({ title: title.slice(0, 300), d: st.d, due: st.due }));
+        Object.assign(obj, { title: title.slice(0, 300), d: st.d, th: st.th, due: st.due, upd: nowIso() });
+        S.tasks.forEach((t) => {
+          if (t.obj !== obj.id) return;
+          if (t.d !== st.d) { t.d = st.d; t.th = null; }
+          if (st.th) t.th = st.th;
+          t.upd = nowIso();
+        });
+      } else S.objectives.push(mkObj({ title: title.slice(0, 300), d: st.d, th: st.th, due: st.due }));
       if (preset.fromIdea) removeIdea(preset.fromIdea);
       save(); closeSheet(); renderAll();
       toast(obj ? "Objectif modifié" : "Objectif créé : ajoute-lui des tâches depuis sa carte");
@@ -860,9 +1002,10 @@ textarea.in{resize:vertical;min-height:48px}
     const nodes = [
       field("Nom de l'objectif", [titleIn, err], "f-otitle"),
       field("Domaine", [domRow]),
+      field("Thème", [thF.el]),
       field("Échéance", [dueRow, dateIn])
     ];
-    if (obj) nodes.push(h("p", { class: "hint", text: n ? n + (n > 1 ? " tâches rattachées." : " tâche rattachée.") + " Ajoute-en depuis la carte de l'objectif." : "Aucune tâche rattachée pour l'instant." }));
+    if (obj) nodes.push(h("p", { class: "hint", text: n ? plural(n, "tâche rattachée.", "tâches rattachées.") + " Ajoute-en depuis la carte de l'objectif." : "Aucune tâche rattachée pour l'instant." }));
     openSheet(obj ? "Modifier l'objectif" : preset.fromIdea ? "Transformer l'idée en objectif" : "Nouvel objectif", nodes, actions);
     if (!obj && !preset.title) setTimeout(() => titleIn.focus(), 60);
   }
@@ -870,20 +1013,22 @@ textarea.in{resize:vertical;min-height:48px}
   /* Idée : créer, modifier, supprimer */
   function openIdeaDialog(idea, preset) {
     preset = preset || {};
-    const st = idea ? { text: idea.text, d: idea.d } : { text: preset.text || "", d: domainOrDefault(preset.d) };
+    const st = idea ? { text: idea.text, d: idea.d, th: idea.th } : { text: preset.text || "", d: domainOrDefault(preset.d), th: preset.th || null };
     const textIn = h("textarea", { id: "f-itext", class: "in", rows: "3", placeholder: "Ex. Proposer un afterwork avec un partenaire" });
     textIn.value = st.text;
     const err = h("p", { class: "err", hidden: true }, "Écris ton idée.");
-    const domRow = choiceRow(domainChoices(), st.d, (v) => { st.d = v; });
+    const thF = themeField(st, null);
+    const domRow = choiceRow(domainChoices(), st.d, (v) => { st.d = v; thF.redraw(); });
     const saveBtn = h("button", { type: "button", class: "primary" }, idea ? "Enregistrer" : "Ajouter l'idée");
     saveBtn.addEventListener("click", () => {
       const text = textIn.value.trim();
       if (!text) { err.hidden = false; textIn.focus(); return; }
-      if (idea) Object.assign(idea, { text: text.slice(0, 2000), d: st.d, upd: nowIso() });
-      else S.ideas.push(mkIdea({ text: text.slice(0, 2000), d: st.d }));
+      const vals = { text: text.slice(0, 2000), d: st.d, th: st.th };
+      if (idea) Object.assign(idea, vals, { upd: nowIso() });
+      else S.ideas.push(mkIdea(vals));
       if (preset.fromNote) removeNote(preset.fromNote);
       save(); closeSheet(); renderAll();
-      toast(idea ? "Idée modifiée" : "Idée rangée dans " + dom(st.d).label);
+      toast(idea ? "Idée modifiée" : "Idée rangée dans " + scopeLabel(vals));
     });
     const actions = [saveBtn, cancelBtn()];
     if (idea) actions.push(h("span", { class: "spacer" }), dangerButton("Supprimer", "Confirmer la suppression", () => {
@@ -891,36 +1036,67 @@ textarea.in{resize:vertical;min-height:48px}
     }));
     openSheet(idea ? "Modifier l'idée" : preset.fromNote ? "Ranger la note en idée" : "Nouvelle idée", [
       field("Idée", [textIn, err], "f-itext"),
-      field("Domaine", [domRow])
+      field("Domaine", [domRow]),
+      field("Thème", [thF.el])
     ], actions);
     if (!idea && !preset.text) setTimeout(() => textIn.focus(), 60);
   }
 
-  /* Réglages : thème, domaines, exemples */
+  /* Thème : créer, renommer, supprimer */
+  function deleteTheme(id) {
+    const clear = (x) => { if (x.th === id) { x.th = null; x.upd = nowIso(); } };
+    S.tasks.forEach(clear); S.ideas.forEach(clear); S.objectives.forEach(clear);
+    S.themes = S.themes.filter((t) => t.id !== id);
+    if (themeSel && themeSel.id === id) themeSel = null;
+    save();
+  }
+  function openThemeDialog(t, preset) {
+    preset = preset || {};
+    const dId = t ? t.d : domainOrDefault(preset.d);
+    const nameIn = h("input", { type: "text", id: "f-thname", class: "in", maxlength: "60", placeholder: "Ex. Communication" });
+    nameIn.value = t ? t.label : "";
+    const err = h("p", { class: "err", hidden: true }, "Donne un nom au thème.");
+    const st = { d: dId };
+    const domRow = t ? null : choiceRow(domainChoices(), st.d, (v) => { st.d = v; });
+    const saveBtn = h("button", { type: "button", class: "primary" }, t ? "Enregistrer" : "Créer le thème");
+    saveBtn.addEventListener("click", () => {
+      const label = nameIn.value.trim();
+      if (!label) { err.hidden = false; nameIn.focus(); return; }
+      if (t) { t.label = label.slice(0, 60); t.upd = nowIso(); }
+      else S.themes.push(mkTheme(st.d, label.slice(0, 60)));
+      save(); closeSheet(); renderAll();
+      toast(t ? "Thème renommé" : "Thème créé dans " + dom(st.d).label);
+    });
+    const actions = [saveBtn, cancelBtn()];
+    if (t) actions.push(h("span", { class: "spacer" }), dangerButton("Supprimer", "Confirmer (son contenu reste dans " + dom(t.d).label + ")", () => {
+      deleteTheme(t.id); closeSheet(); renderAll(); toast("Thème supprimé");
+    }));
+    const nodes = [field("Nom du thème", [nameIn, err], "f-thname")];
+    if (domRow) nodes.push(field("Domaine", [domRow]));
+    else nodes.push(h("p", { class: "hint", text: "Domaine : " + dom(t.d).label + "." }));
+    openSheet(t ? "Modifier le thème" : "Nouveau thème", nodes, actions);
+    if (!t) setTimeout(() => nameIn.focus(), 60);
+  }
+
+  /* Réglages : thème d'affichage, domaines et thèmes, exemples */
   function deleteDomain(id) {
     const rest = S.domains.filter((d) => d.id !== id);
     if (!rest.length) return null;
     const target = rest.find((d) => d.id === "perso") || rest[0];
-    const mv = (x) => { if (x.d === id) { x.d = target.id; x.upd = nowIso(); } };
+    const mv = (x) => { if (x.d === id) { x.d = target.id; x.th = null; x.upd = nowIso(); } };
     S.tasks.forEach(mv); S.ideas.forEach(mv); S.objectives.forEach(mv);
+    S.themes = S.themes.filter((t) => t.d !== id);
     S.domains = rest;
     if (filter === id) filter = "tout";
+    if (themeSel && (themeSel.d === id || (themeSel.id && !theme(themeSel.id)))) themeSel = null;
     save();
     return target;
   }
-  function clearExamples() {
-    const exObj = new Set(S.objectives.filter((o) => o.ex).map((o) => o.id));
-    S.objectives = S.objectives.filter((o) => !o.ex);
-    S.tasks = S.tasks.filter((t) => !t.ex);
-    S.tasks.forEach((t) => { if (exObj.has(t.obj)) { t.obj = null; t.upd = nowIso(); } });
-    S.notes = S.notes.filter((n) => !n.ex);
-    S.ideas = S.ideas.filter((i) => !i.ex);
-    save();
-  }
+  function clearExamples() { removeExamplesFrom(S); save(); }
   function openSettings() {
     const themeRow = choiceRow([{ v: "light", label: "Clair" }, { v: "dark", label: "Sombre" }, { v: "auto", label: "Comme l'appareil" }], S.settings.theme, (v) => { S.settings.theme = v; save(); applyTheme(); });
     const list = h("div", { class: "setlist" });
-    const drawDomains = () => {
+    const drawDomains = (focusId) => {
       list.textContent = "";
       S.domains.forEach((d, idx) => {
         const name = h("input", { type: "text", class: "in", id: "dom-name-" + idx, value: d.label, maxlength: "40", "aria-label": "Nom du domaine" });
@@ -934,10 +1110,20 @@ textarea.in{resize:vertical;min-height:48px}
         if (S.domains.length > 1) row.append(dangerButton("Supprimer", "Confirmer", () => {
           const target = deleteDomain(d.id);
           drawDomains(); renderAll();
-          if (target) toast("Domaine supprimé : ses éléments sont dans " + target.label);
+          if (target) toast("Domaine supprimé : son contenu est dans " + target.label);
         }));
-        list.append(row);
+        const ths = S.themes.filter((t) => t.d === d.id);
+        const tl = h("div", { class: "themelist k-" + d.color }, ths.map((t, j) => {
+          const tin = h("input", { type: "text", class: "in", id: "th-name-" + idx + "-" + j, "data-th-id": t.id, value: t.label, maxlength: "60", "aria-label": "Nom du thème" });
+          tin.addEventListener("change", () => { const v = tin.value.trim(); if (v) { t.label = v.slice(0, 60); t.upd = nowIso(); save(); renderAll(); } else tin.value = t.label; });
+          return h("div", { class: "throw" }, h("span", { class: "dot" }), tin, dangerButton("Supprimer", "Confirmer", () => { deleteTheme(t.id); drawDomains(); renderAll(); toast("Thème supprimé"); }));
+        }));
+        const addTh = h("button", { type: "button", class: "act small" }, "+ Thème");
+        addTh.addEventListener("click", () => { const t = mkTheme(d.id, "Nouveau thème"); S.themes.push(t); save(); drawDomains(t.id); renderAll(); });
+        tl.append(h("div", null, addTh));
+        list.append(h("div", { class: "domblock" }, row, tl));
       });
+      if (focusId) { const inp = list.querySelector('[data-th-id="' + focusId + '"]'); if (inp) { inp.focus(); inp.select(); } }
     };
     drawDomains();
     const addDom = h("button", { type: "button", class: "act small" }, "+ Ajouter un domaine");
@@ -945,10 +1131,10 @@ textarea.in{resize:vertical;min-height:48px}
       const used = new Set(S.domains.map((x) => x.color));
       S.domains.push({ id: uid(), label: "Nouveau domaine", color: COLORS.find((c) => !used.has(c)) || "slate" });
       save(); drawDomains(); renderAll();
-      const last = list.querySelector(".setrow:last-child input");
+      const last = list.querySelector(".domblock:last-child .setrow input");
       if (last) { last.focus(); last.select(); }
     });
-    const nodes = [field("Thème", [themeRow]), field("Domaines", [list, addDom])];
+    const nodes = [field("Affichage", [themeRow]), field("Domaines et thèmes", [list, addDom])];
     if (hasExamples()) nodes.push(field("Exemples", [
       h("p", { class: "hint", text: "Les éléments marqués « exemple » servent à découvrir l'appli. Ce que tu as ajouté toi-même est gardé." }),
       h("div", null, dangerButton("Effacer les exemples", "Touche encore pour confirmer", () => { clearExamples(); closeSheet(); renderAll(); toast("Exemples effacés"); }))
@@ -967,7 +1153,7 @@ textarea.in{resize:vertical;min-height:48px}
   }
   if (darkMq && darkMq.addEventListener) darkMq.addEventListener("change", applyTheme);
 
-  /* Rendus */
+  /* Rendus communs */
   function renderHeader() {
     $("#dateLabel").textContent = cap(fLong.format(today));
     $("#weekLabel").textContent = "Semaine " + isoWeek(today);
@@ -981,12 +1167,33 @@ textarea.in{resize:vertical;min-height:48px}
     if (filter !== "tout" && !S.domains.some((d) => d.id === filter)) filter = "tout";
     const mk = (id, label, color) => {
       const b = h("button", { type: "button", class: "chip" + (color ? " k-" + color : ""), "data-filter": id, "aria-pressed": String(filter === id) }, color ? h("span", { class: "dot" }) : null, label);
-      b.addEventListener("click", () => { filter = id; renderAll(); });
+      b.addEventListener("click", () => { filter = id; themeSel = null; renderAll(); });
       return b;
     };
     box.append(mk("tout", "Tout"), ...S.domains.map((d) => mk(d.id, d.label, d.color)));
   }
+  function renderTaskGroups(box, tasks, opts) {
+    opts = opts || {};
+    const tk = iso(today), end = iso(addDays(monday, 6));
+    const open = tasks.filter((t) => !t.done).sort(byDue);
+    const groups = [
+      ["g-late", "En retard", open.filter((t) => t.due && t.due < tk)],
+      ["g-today", "Aujourd'hui", open.filter((t) => t.due === tk)],
+      ["g-week", "Cette semaine", open.filter((t) => t.due && t.due > tk && t.due <= end)],
+      ["g-later", opts.datedOnly ? "Plus tard" : "Plus tard ou sans date", open.filter((t) => (opts.datedOnly ? t.due && t.due > end : !t.due || t.due > end))]
+    ];
+    let shown = 0;
+    groups.forEach((g) => {
+      if (!g[2].length) return;
+      shown += g[2].length;
+      box.append(h("div", { class: "group " + g[0] },
+        h("div", { class: "group-h" }, h("span", { text: g[1] }), h("span", { class: "n", text: String(g[2].length) })),
+        h("ul", { class: "tasks" }, g[2].map((t) => taskRow(t, opts.rowOpts)))));
+    });
+    return shown;
+  }
 
+  /* Aujourd'hui */
   const D0 = 7 * 60, D1 = 22 * 60, SPAN = D1 - D0;
   const pct = (m) => ((Math.min(Math.max(m, D0), D1) - D0) / SPAN) * 100;
   function renderChrono() {
@@ -1051,22 +1258,10 @@ textarea.in{resize:vertical;min-height:48px}
     const box = $("#taskGroups");
     box.textContent = "";
     const list = S.tasks.filter(passD);
-    const open = list.filter((t) => !t.done).sort(byDue);
+    const open = list.filter((t) => !t.done);
     const done = list.filter((t) => t.done).sort((a, b) => ((a.doneAt || "") < (b.doneAt || "") ? 1 : -1));
-    const tk = iso(today), end = iso(addDays(monday, 6));
-    const groups = [
-      ["g-late", "En retard", open.filter((t) => t.due && t.due < tk)],
-      ["g-today", "Aujourd'hui", open.filter((t) => t.due === tk)],
-      ["g-week", "Cette semaine", open.filter((t) => t.due && t.due > tk && t.due <= end)],
-      ["g-later", "Plus tard", open.filter((t) => !t.due || t.due > end)]
-    ];
     $("#openCount").textContent = open.length + " à faire";
-    groups.forEach((g) => {
-      if (!g[2].length) return;
-      box.append(h("div", { class: "group " + g[0] },
-        h("div", { class: "group-h" }, h("span", { text: g[1] }), h("span", { class: "n", text: String(g[2].length) })),
-        h("ul", { class: "tasks" }, g[2].map((t) => taskRow(t)))));
-    });
+    renderTaskGroups(box, list);
     if (!open.length) box.append(h("p", { class: "empty", text: "Rien à faire ici. Ajoute une tâche avec « + Tâche » ou depuis À trier." }));
     if (done.length) {
       const lbl = showDone ? "Masquer les tâches faites" : (done.length > 1 ? "Voir les " + done.length + " tâches faites" : "Voir la tâche faite");
@@ -1078,7 +1273,7 @@ textarea.in{resize:vertical;min-height:48px}
     const box = $("#inboxMini");
     box.textContent = "";
     const n = S.notes.length;
-    $("#inboxCount").textContent = n ? n + (n > 1 ? " notes" : " note") : "";
+    $("#inboxCount").textContent = n ? plural(n, "note", "notes") : "";
     if (!n) { box.append(h("p", { class: "empty", text: "Rien à trier." })); return; }
     box.append(h("ul", { class: "mini-notes" }, S.notes.slice().sort(newest).slice(0, 3).map((x) => h("li", { text: x.text }))),
       h("button", { type: "button", class: "primary small", "data-goto": "trier" }, n > 1 ? "Trier les " + n + " notes" : "Trier la note"));
@@ -1087,12 +1282,11 @@ textarea.in{resize:vertical;min-height:48px}
     const ts = S.tasks.filter((t) => t.obj === o.id);
     return { total: ts.length, done: ts.filter((t) => t.done).length, tasks: ts };
   }
-  const byObjDue = (a, b) => { const x = a.due || "9999-99-99", y = b.due || "9999-99-99"; return x < y ? -1 : x > y ? 1 : a.title.localeCompare(b.title, "fr"); };
-  function progressBar(o, st, big) {
-    const p = st.total ? Math.round((st.done / st.total) * 100) : 0;
-    const fill = h("i", { class: "k-" + dom(o.d).color });
+  function progressBar(color, done, total, label, big) {
+    const p = total ? Math.round((done / total) * 100) : 0;
+    const fill = h("i", { class: "k-" + color });
     fill.style.width = p + "%";
-    return h("div", { class: "bar" + (big ? " big" : ""), role: "progressbar", "aria-valuemin": "0", "aria-valuemax": String(st.total), "aria-valuenow": String(st.done), "aria-label": o.title }, fill);
+    return h("div", { class: "bar" + (big ? " big" : ""), role: "progressbar", "aria-valuemin": "0", "aria-valuemax": String(total), "aria-valuenow": String(done), "aria-label": label }, fill);
   }
   function renderGoalsMini() {
     const box = $("#goalsMini");
@@ -1101,31 +1295,33 @@ textarea.in{resize:vertical;min-height:48px}
     if (!objs.length) { box.append(h("p", { class: "empty", text: "Pas encore d'objectif." }), h("button", { type: "button", class: "linkbtn", "data-add": "objective" }, "+ Créer un objectif")); return; }
     objs.forEach((o) => {
       const st = objStats(o);
-      box.append(h("button", { type: "button", class: "row", "data-goto": "objectifs" },
+      box.append(h("button", { type: "button", class: "row", "data-act": "theme-open", "data-d": o.d, "data-id": o.th || "" },
         h("div", { class: "lbl" }, h("span", { class: "ttl", text: o.title }), h("span", { class: "val", text: st.total ? st.done + " / " + st.total : "0 tâche" })),
-        progressBar(o, st, false)));
+        progressBar(dom(o.d).color, st.done, st.total, o.title, false)));
     });
   }
   function renderDeadlines() {
     const ol = $("#deadlines");
     ol.textContent = "";
     const tk = iso(today);
-    const items = S.tasks.filter((t) => passD(t) && !t.done && t.due && t.due > tk).map((t) => ({ date: t.due, title: t.title, d: t.d }))
-      .concat(S.objectives.filter((o) => passD(o) && o.due && o.due >= tk).map((o) => ({ date: o.due, title: "Objectif : " + o.title, d: o.d })))
+    const items = S.tasks.filter((t) => passD(t) && !t.done && t.due && t.due > tk).map((t) => ({ date: t.due, title: t.title, scope: scopeLabel(t) }))
+      .concat(S.objectives.filter((o) => passD(o) && o.due && o.due >= tk).map((o) => ({ date: o.due, title: "Objectif : " + o.title, scope: scopeLabel(o) })))
       .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)).slice(0, 6);
     if (!items.length) { ol.append(h("li", null, h("span", { class: "empty", text: "Aucune échéance à venir." }))); return; }
     items.forEach((it) => {
       const n = dayDiff(fromIso(it.date), today);
       ol.append(h("li", null,
         h("span", { class: "jx" + (n <= 2 ? " soon" : ""), text: n === 0 ? "J" : "J-" + n }),
-        h("span", { class: "what" }, h("span", { text: it.title }), h("span", { text: cap(fWdS.format(fromIso(it.date))) + " " + fDM.format(fromIso(it.date)) + " · " + dom(it.d).label }))));
+        h("span", { class: "what" }, h("span", { text: it.title }), h("span", { text: cap(fWdS.format(fromIso(it.date))) + " " + fDM.format(fromIso(it.date)) + " · " + it.scope }))));
     });
   }
+
+  /* À trier */
   function renderTrier() {
     const ul = $("#notesList");
     ul.textContent = "";
     const notes = S.notes.slice().sort(newest);
-    $("#trierHead").textContent = notes.length ? notes.length + (notes.length > 1 ? " notes" : " note") : "";
+    $("#trierHead").textContent = notes.length ? plural(notes.length, "note", "notes") : "";
     if (!notes.length) { ul.append(h("li", { class: "empty-state" }, h("strong", { text: "Rien à trier." }), " Note tes idées avec « Noter » en haut de l'écran : elles arriveront ici.")); return; }
     notes.forEach((n) => {
       const sg = suggest(n.text), parts = splitText(n.text), d = dom(sg.d), di = dueInfo(sg.due);
@@ -1134,7 +1330,7 @@ textarea.in{resize:vertical;min-height:48px}
         h("div", { class: "note-meta" },
           h("span", { text: ago(n.created) }),
           h("span", { text: "· Proposition :" }),
-          h("span", { class: "dchip k-" + d.color, text: d.label }),
+          h("span", { class: "dchip k-" + d.color, text: scopeLabel(sg) }),
           sg.due ? h("span", { class: "due " + di.cls, text: di.text }) : null,
           n.ex ? h("span", { class: "tag", text: "exemple" }) : null),
         h("div", { class: "note-actions" },
@@ -1144,49 +1340,104 @@ textarea.in{resize:vertical;min-height:48px}
           dangerButton("Supprimer", "Confirmer", () => { removeNote(n.id); save(); renderAll(); toast("Note supprimée"); }))));
     });
   }
+
+  /* Thèmes */
+  const inScope = (dId, thId) => (x) => x.d === dId && (thId ? x.th === thId : !x.th);
+  function scopeStats(dId, thId) {
+    const m = inScope(dId, thId);
+    const tasks = S.tasks.filter(m), open = tasks.filter((t) => !t.done);
+    const objs = S.objectives.filter(m), ideas = S.ideas.filter(m);
+    const next = open.filter((t) => t.due).sort(byDue)[0] || null;
+    let oDone = 0, oTotal = 0;
+    objs.forEach((o) => { const st = objStats(o); oDone += st.done; oTotal += st.total; });
+    return { open, objs, ideas, next, oDone, oTotal, count: tasks.length + objs.length + ideas.length };
+  }
+  function themeCard(d, t) {
+    const st = scopeStats(d.id, t ? t.id : null);
+    const di = st.next ? dueInfo(st.next.due) : null;
+    return h("button", { type: "button", class: "tcard k-" + d.color + (t ? "" : " loose"), "data-act": "theme-open", "data-d": d.id, "data-id": t ? t.id : "" },
+      h("span", { class: "tcard-name" }, h("span", { class: "dot" }), t ? t.label : "Sans thème"),
+      h("span", { class: "tcard-meta", text: plural(st.open.length, "tâche", "tâches") + " · " + plural(st.objs.length, "objectif", "objectifs") + " · " + plural(st.ideas.length, "idée", "idées") }),
+      h("span", { class: "tcard-next", text: st.next ? di.text + " : " + st.next.title : "Aucune échéance" }),
+      st.oTotal ? h("span", { class: "tprog" }, progressBar(d.color, st.oDone, st.oTotal, "Avancement des objectifs", false), h("span", { class: "val", text: st.oDone + " / " + st.oTotal })) : null);
+  }
+  function renderThemesOverview(box) {
+    S.domains.filter((d) => filter === "tout" || d.id === filter).forEach((d) => {
+      const ths = S.themes.filter((t) => t.d === d.id);
+      const cards = ths.map((t) => themeCard(d, t));
+      if (scopeStats(d.id, null).count) cards.push(themeCard(d, null));
+      box.append(h("section", { class: "dsec" },
+        h("div", { class: "dsec-h" }, h("h2", { class: "gh k-" + d.color }, h("span", { class: "dot" }), d.label), h("button", { type: "button", class: "add", "data-act": "theme-new", "data-d": d.id }, "+ Thème")),
+        cards.length ? h("div", { class: "tcards" }, cards) : h("p", { class: "empty", text: "Pas encore de thème ici. Ajoute-en un avec « + Thème »." })));
+    });
+  }
   function objCard(o) {
     const st = objStats(o), d = dom(o.d);
-    const open = st.tasks.filter((t) => !t.done).sort(byDue), fin = st.tasks.filter((t) => t.done);
+    const open = st.tasks.filter((x) => !x.done).sort(byDue), fin = st.tasks.filter((x) => x.done);
+    const rowOpts = (x) => ({ noObj: true, noScope: x.d === o.d && (x.th || null) === (o.th || null) });
     const edit = h("button", { type: "button", class: "icon-btn small", "data-act": "obj-edit", "data-id": o.id, "aria-label": "Modifier l'objectif " + o.title }, icon("pencil"));
     return h("section", { class: "panel ocard" },
-      h("div", { class: "ocard-h" }, h("span", { class: "dchip k-" + d.color, text: d.label }), h("span", { class: "odue", text: o.due ? "Avant le " + fDMY.format(fromIso(o.due)) + " · " + jLabel(o.due) : "Sans échéance" }), o.ex ? h("span", { class: "tag", text: "exemple" }) : null, edit),
+      h("div", { class: "ocard-h" }, h("span", { class: "odue", text: o.due ? "Avant le " + fDMY.format(fromIso(o.due)) + " · " + jLabel(o.due) : "Sans échéance" }), o.ex ? h("span", { class: "tag", text: "exemple" }) : null, edit),
       h("h3", { class: "otitle", text: o.title }),
-      h("div", { class: "oprog" }, progressBar(o, st, true), h("span", { class: "val", text: st.total ? st.done + " / " + st.total + (st.total > 1 ? " tâches" : " tâche") : "Aucune tâche" })),
-      open.length ? h("ul", { class: "tasks" }, open.map((t) => taskRow(t, { noObj: true }))) : null,
-      fin.length ? h("ul", { class: "tasks donelist" }, fin.map((t) => taskRow(t, { noObj: true }))) : null,
-      h("button", { type: "button", class: "linkbtn", "data-add": "task", "data-obj": o.id, "data-d": o.d }, "+ Ajouter une tâche"));
+      h("div", { class: "oprog" }, progressBar(d.color, st.done, st.total, o.title, true), h("span", { class: "val", text: st.total ? st.done + " / " + plural(st.total, "tâche", "tâches") : "Aucune tâche" })),
+      open.length ? h("ul", { class: "tasks" }, open.map((x) => taskRow(x, rowOpts(x)))) : null,
+      fin.length ? h("ul", { class: "tasks donelist" }, fin.map((x) => taskRow(x, rowOpts(x)))) : null,
+      h("button", { type: "button", class: "linkbtn", "data-add": "task", "data-obj": o.id, "data-d": o.d, "data-th": o.th || "" }, "+ Ajouter une tâche"));
   }
-  function renderObjectifs() {
-    const box = $("#objCards");
+  function ideaRow(i, showScope) {
+    const d = dom(i.d);
+    return h("li", { class: "idea" },
+      h("button", { type: "button", class: "idea-text", "data-act": "idea-edit", "data-id": i.id }, h("span", { text: i.text }), showScope ? h("span", { class: "dchip k-" + d.color, text: scopeLabel(i) }) : null, i.ex ? h("span", { class: "tag", text: "exemple" }) : null),
+      h("div", { class: "idea-actions" },
+        h("button", { type: "button", class: "act small", "data-act": "idea-task", "data-id": i.id }, "→ Tâche"),
+        h("button", { type: "button", class: "act small", "data-act": "idea-obj", "data-id": i.id }, "→ Objectif")));
+  }
+  function renderThemeDash(box) {
+    const t = themeSel.id ? theme(themeSel.id) : null;
+    if (themeSel.id && !t) { themeSel = null; renderThemesOverview(box); return; }
+    const d = dom(t ? t.d : themeSel.d);
+    const thId = t ? t.id : null, m = inScope(d.id, thId);
+    const objs = S.objectives.filter(m).sort(byObjDue);
+    const tasks = S.tasks.filter(m);
+    const dated = tasks.filter((x) => x.due);
+    const undated = tasks.filter((x) => !x.done && !x.due && !x.obj);
+    const ideas = S.ideas.filter(m).sort(newest);
+    const back = h("button", { type: "button", class: "icon-btn", "data-act": "theme-back", "aria-label": "Revenir aux thèmes" }, icon("back"));
+    const crumb = h("div", { class: "crumb k-" + d.color }, h("span", { class: "dom", text: d.label }), h("span", { class: "sep", text: "›" }), h("span", { text: t ? t.label : "Sans thème" }));
+    const edit = t ? h("button", { type: "button", class: "icon-btn small", "data-act": "theme-edit", "data-id": t.id, "aria-label": "Modifier le thème" }, icon("pencil")) : null;
+    const thAttr = thId || "";
+    const actions = h("div", { class: "dash-actions" },
+      h("button", { type: "button", class: "add", "data-add": "task", "data-d": d.id, "data-th": thAttr }, "+ Tâche"),
+      h("button", { type: "button", class: "add", "data-add": "objective", "data-d": d.id, "data-th": thAttr }, "+ Objectif"),
+      h("button", { type: "button", class: "add", "data-add": "idea", "data-d": d.id, "data-th": thAttr }, "+ Idée"));
+    box.append(h("div", { class: "dash-head" }, back, crumb, edit, actions));
+
+    const left = h("div", { class: "dash-col" });
+    left.append(h("h2", { class: "vh-sm" }, h("span", { text: "Objectifs" }), h("small", { text: objs.length ? String(objs.length) : "" })));
+    if (objs.length) objs.forEach((o) => left.append(objCard(o)));
+    else left.append(h("div", { class: "panel empty-state" }, h("strong", { text: "Pas encore d'objectif dans ce thème." }), " Un objectif regroupe les tâches qui le font avancer : crée-le avec « + Objectif »."));
+
+    const right = h("div", { class: "dash-col" });
+    const up = h("section", { class: "panel" }, h("h2", null, h("span", { text: "À venir" }), h("small", { text: plural(dated.filter((x) => !x.done).length, "tâche datée", "tâches datées") })));
+    if (!renderTaskGroups(up, dated, { datedOnly: true, rowOpts: { noScope: true } })) up.append(h("p", { class: "empty", text: "Rien de daté pour l'instant." }));
+    right.append(up);
+    const und = h("section", { class: "panel" }, h("h2", null, h("span", { text: "Tâches sans date" }), h("small", { text: undated.length ? String(undated.length) : "" })));
+    if (undated.length) und.append(h("ul", { class: "tasks" }, undated.map((x) => taskRow(x, { noScope: true }))));
+    else und.append(h("p", { class: "empty", text: "Aucune." }));
+    right.append(und);
+    const idp = h("section", { class: "panel" }, h("h2", null, h("span", { text: "Idées" }), h("small", { text: ideas.length ? String(ideas.length) : "" })));
+    if (ideas.length) idp.append(h("ul", { class: "ideas" }, ideas.map((i) => ideaRow(i, false))));
+    else idp.append(h("p", { class: "empty", text: "Pas encore d'idée ici." }));
+    right.append(idp);
+    box.append(h("div", { class: "dash-grid" }, left, right));
+  }
+  function renderThemes() {
+    const box = $("#themesBox");
     box.textContent = "";
-    const objs = S.objectives.filter(passD).sort(byObjDue);
-    if (!objs.length) box.append(h("div", { class: "panel empty-state" }, h("strong", { text: "Pas encore d'objectif ici." }), " Crée-en un avec « + Objectif », puis ajoute-lui des tâches."));
-    objs.forEach((o) => box.append(objCard(o)));
-    const loose = S.tasks.filter((t) => !t.obj && passD(t) && !t.done).sort(byDue);
-    const lp = $("#looseTasks");
-    lp.textContent = "";
-    lp.append(h("h2", null, h("span", { text: "Tâches sans objectif" }), h("small", { text: loose.length ? String(loose.length) : "" })));
-    if (loose.length) lp.append(h("ul", { class: "tasks" }, loose.map((t) => taskRow(t))));
-    else lp.append(h("p", { class: "empty", text: "Aucune." }));
+    if (themeSel) renderThemeDash(box); else renderThemesOverview(box);
   }
-  function renderIdees() {
-    const box = $("#ideaGroups");
-    box.textContent = "";
-    let any = false;
-    S.domains.filter((d) => filter === "tout" || d.id === filter).forEach((d) => {
-      const ideas = S.ideas.filter((i) => i.d === d.id).sort(newest);
-      if (!ideas.length) return;
-      any = true;
-      box.append(h("section", { class: "panel" },
-        h("h2", null, h("span", { class: "gh k-" + d.color }, h("span", { class: "dot" }), d.label), h("small", { text: ideas.length + (ideas.length > 1 ? " idées" : " idée") })),
-        h("ul", { class: "ideas" }, ideas.map((i) => h("li", { class: "idea" },
-          h("button", { type: "button", class: "idea-text", "data-act": "idea-edit", "data-id": i.id }, h("span", { text: i.text }), i.ex ? h("span", { class: "tag", text: "exemple" }) : null),
-          h("div", { class: "idea-actions" },
-            h("button", { type: "button", class: "act small", "data-act": "idea-task", "data-id": i.id }, "→ Tâche"),
-            h("button", { type: "button", class: "act small", "data-act": "idea-obj", "data-id": i.id }, "→ Objectif")))))));
-    });
-    if (!any) box.append(h("div", { class: "panel empty-state" }, h("strong", { text: "Pas encore d'idée ici." }), " Note-les avec « Noter », puis range-les depuis À trier."));
-  }
+
+  /* Semaine */
   function renderSemaine() {
     const box = $("#week");
     box.textContent = "";
@@ -1212,18 +1463,21 @@ textarea.in{resize:vertical;min-height:48px}
     renderHeader();
     renderChips();
     if (view === "jour") { renderChrono(); renderAgenda(); renderTasks(); renderInboxMini(); renderGoalsMini(); renderDeadlines(); }
-    else if (view === "trier") renderTrier();
-    else if (view === "objectifs") renderObjectifs();
-    else if (view === "idees") renderIdees();
-    else renderSemaine();
+    else if (view === "semaine") renderSemaine();
+    else if (view === "themes") renderThemes();
+    else renderTrier();
     renderFoot();
   }
   function setView(v) {
     view = v;
     document.querySelectorAll("[data-view]").forEach((x) => x.setAttribute("aria-selected", String(x.dataset.view === v)));
-    ["jour", "trier", "objectifs", "idees", "semaine"].forEach((k) => { $("#view-" + k).hidden = k !== v; });
+    ["jour", "semaine", "themes", "trier"].forEach((k) => { $("#view-" + k).hidden = k !== v; });
   }
-  document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => { setView(b.dataset.view); renderAll(); }));
+  document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.view === "themes" && view === "themes") themeSel = null;
+    setView(b.dataset.view);
+    renderAll();
+  }));
 
   /* Actions (délégation) */
   let rerenderTimer = null;
@@ -1240,12 +1494,13 @@ textarea.in{resize:vertical;min-height:48px}
     clearTimeout(rerenderTimer);
     rerenderTimer = setTimeout(renderAll, 450);
   }
-  function handleAct(act, id) {
+  function handleAct(el) {
+    const act = el.dataset.act, id = el.dataset.id;
     const note = () => S.notes.find((x) => x.id === id);
     const idea = () => S.ideas.find((x) => x.id === id);
     if (act === "settings") openSettings();
-    else if (act === "note-task") { const n = note(); if (n) { const sg = suggest(n.text); openTaskDialog(null, { title: sg.title, d: sg.d, due: sg.due, fromNote: n.id }); } }
-    else if (act === "note-idea") { const n = note(); if (n) openIdeaDialog(null, { text: n.text, d: guessDomain(n.text), fromNote: n.id }); }
+    else if (act === "note-task") { const n = note(); if (n) { const sg = suggest(n.text); openTaskDialog(null, { title: sg.title, d: sg.d, th: sg.th, due: sg.due, fromNote: n.id }); } }
+    else if (act === "note-idea") { const n = note(); if (n) { const dd = guessDomain(n.text); openIdeaDialog(null, { text: n.text, d: dd, th: guessTheme(n.text, dd), fromNote: n.id }); } }
     else if (act === "note-split") {
       const n = note(); if (!n) return;
       const parts = splitText(n.text); if (parts.length < 2) return;
@@ -1254,9 +1509,13 @@ textarea.in{resize:vertical;min-height:48px}
       save(); renderAll(); toast("Note découpée en " + parts.length);
     }
     else if (act === "idea-edit") { const i = idea(); if (i) openIdeaDialog(i); }
-    else if (act === "idea-task") { const i = idea(); if (i) openTaskDialog(null, { title: i.text, d: i.d, fromIdea: i.id }); }
-    else if (act === "idea-obj") { const i = idea(); if (i) openObjectiveDialog(null, { title: i.text, d: i.d, fromIdea: i.id }); }
+    else if (act === "idea-task") { const i = idea(); if (i) openTaskDialog(null, { title: i.text, d: i.d, th: i.th, fromIdea: i.id }); }
+    else if (act === "idea-obj") { const i = idea(); if (i) openObjectiveDialog(null, { title: i.text, d: i.d, th: i.th, fromIdea: i.id }); }
     else if (act === "obj-edit") { const o = S.objectives.find((x) => x.id === id); if (o) openObjectiveDialog(o); }
+    else if (act === "theme-open") { themeSel = id ? { id: id, d: el.dataset.d } : { id: null, d: el.dataset.d }; setView("themes"); renderAll(); window.scrollTo(0, 0); }
+    else if (act === "theme-back") { themeSel = null; renderAll(); window.scrollTo(0, 0); }
+    else if (act === "theme-new") openThemeDialog(null, { d: el.dataset.d });
+    else if (act === "theme-edit") { const t = theme(id); if (t) openThemeDialog(t); }
   }
   document.addEventListener("click", (ev) => {
     const t = ev.target;
@@ -1267,16 +1526,16 @@ textarea.in{resize:vertical;min-height:48px}
     if (op) { const task = S.tasks.find((x) => x.id === op.dataset.openTask); if (task) openTaskDialog(task); return; }
     const add = t.closest("[data-add]");
     if (add) {
-      const kind = add.dataset.add, d = add.dataset.d || (filter !== "tout" ? filter : null);
-      if (kind === "task") openTaskDialog(null, { obj: add.dataset.obj || null, d: d });
-      else if (kind === "objective") openObjectiveDialog(null, { d: d });
-      else if (kind === "idea") openIdeaDialog(null, { d: d });
+      const kind = add.dataset.add, d = add.dataset.d || (filter !== "tout" ? filter : null), th = add.dataset.th || null;
+      if (kind === "task") openTaskDialog(null, { obj: add.dataset.obj || null, d: d, th: th });
+      else if (kind === "objective") openObjectiveDialog(null, { d: d, th: th });
+      else if (kind === "idea") openIdeaDialog(null, { d: d, th: th });
       return;
     }
     const go = t.closest("[data-goto]");
-    if (go) { setView(go.dataset.goto); renderAll(); window.scrollTo(0, 0); return; }
+    if (go) { if (go.dataset.goto === "themes") themeSel = null; setView(go.dataset.goto); renderAll(); window.scrollTo(0, 0); return; }
     const act = t.closest("[data-act]");
-    if (act) { handleAct(act.dataset.act, act.dataset.id); return; }
+    if (act) { handleAct(act); return; }
     if (t.closest("#toggleDone")) { showDone = !showDone; renderTasks(); }
   });
 
@@ -1300,8 +1559,7 @@ textarea.in{resize:vertical;min-height:48px}
     noteInput.value = "";
     autoGrow();
     renderAll();
-    const n = S.notes.length;
-    toast("Noté. " + n + (n > 1 ? " notes à trier." : " note à trier."));
+    toast("Noté. " + plural(S.notes.length, "note à trier.", "notes à trier."));
   });
 
   /* Écran toujours allumé */
