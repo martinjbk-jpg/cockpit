@@ -1,0 +1,17 @@
+{
+  "name": "Cockpit",
+  "short_name": "Cockpit",
+  "description": "Ma journée, mes tâches, mes échéances et mes objectifs sur un seul écran.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ECEFF3",
+  "theme_color": "#ECEFF3",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
