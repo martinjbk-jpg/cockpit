@@ -170,9 +170,30 @@ h2 small{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--mu
 .done .check{background:var(--ok);border-color:var(--ok)}
 .done .check svg{opacity:1}
 .done .t-title{text-decoration:line-through;color:var(--muted)}
-.t-open{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;text-align:left;border:0;background:transparent;padding:0;color:inherit}
+.t-open{flex:1;min-width:0;display:flex;align-items:flex-start;gap:10px;text-align:left;border:0;background:transparent;padding:0;color:inherit}
+.t-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .t-title{font-weight:500;overflow-wrap:anywhere}
 .t-meta{display:flex;gap:5px 8px;flex-wrap:wrap;align-items:center}
+.t-meta:empty{display:none}
+/* Échéance en gros à droite : la date, puis le délai (retard, aujourd'hui, demain, J-n) */
+.t-due{flex:none;display:flex;flex-direction:column;align-items:flex-end;text-align:right;line-height:1.15;padding-top:1px}
+.t-due .d1{font-family:var(--f-display);font-weight:700;font-size:16px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.t-due .d2{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);white-space:nowrap;margin-top:2px}
+.t-due.late .d1,.t-due.late .d2{color:var(--late)}
+.t-due.late .d2,.t-due.today .d2{font-weight:600}
+.t-due.today .d2{color:var(--accent)}
+.has-notes{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--muted)}
+.has-notes .ico{width:13px;height:13px}
+/* Poignée pour changer l'ordre (glisser, ou flèches haut et bas au clavier) */
+.grip{flex:none;align-self:stretch;width:26px;margin:-9px -6px -9px -4px;padding:0;border:0;background:transparent;color:var(--muted);opacity:.6;display:grid;place-items:center;cursor:grab;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;border-radius:8px}
+.grip svg{width:15px;height:15px}
+.grip:hover{opacity:1}
+.tasks > .task:only-child .grip{visibility:hidden}
+.task.dragging{position:relative;z-index:5;background:var(--panel);box-shadow:var(--shadow-lg)}
+.task.dragging .grip{opacity:1;color:var(--accent);cursor:grabbing}
+.tasks.sorting .task:not(.dragging){transition:transform .15s ease}
+body.is-dragging{-webkit-user-select:none;user-select:none;cursor:grabbing}
+.notes-in{min-height:120px}
 .t-obj{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
 .dchip{border-radius:999px;padding:1px 9px;font-weight:600;font-size:12px;line-height:1.6;background:var(--k-soft,var(--sunk));color:var(--k,var(--muted));white-space:nowrap}
 .due,.dur{color:var(--muted);font-family:var(--f-mono);font-size:12px}
@@ -452,6 +473,8 @@ textarea.in{resize:vertical;min-height:48px}
     gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
+    grip: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg>',
+    note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg>',
     check: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4l2.4 2.4 5.2-5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
   const $ = (s) => document.querySelector(s);
@@ -644,7 +667,8 @@ textarea.in{resize:vertical;min-height:48px}
         return Object.assign(base(x), {
           title: str(x.title, 300), d: dd, th: fixTh(x.th, dd), due: validIso(x.due),
           dur: (typeof x.dur === "number" && x.dur > 0 && x.dur <= 1440) ? x.dur : null,
-          obj: objIds.has(x.obj) ? x.obj : null, done: !!x.done, doneAt: x.done ? (str(x.doneAt, 40) || null) : null
+          obj: objIds.has(x.obj) ? x.obj : null, done: !!x.done, doneAt: x.done ? (str(x.doneAt, 40) || null) : null,
+          o: ordOf(x), notes: str(x.notes, 20000) || undefined   // absents si vides : rien ne change pour les anciennes tâches
         });
       });
     const thm = d.settings && d.settings.theme;
@@ -701,6 +725,7 @@ textarea.in{resize:vertical;min-height:48px}
   if (auth && (!auth.access_token || !auth.refresh_token || !auth.user || !sync || auth.user.id !== sync.user)) { auth = null; writeJson(AUTH_KEY, null); }
   const syncUi = { state: "idle", msg: "" };   // idle | ok | offline | auth | error
   let pullDeferred = false, needRender = false, pushTimer = null, refreshing = null, running = null, again = false;
+  let drag = null;   // tâche en train d'être glissée : on ne reçoit rien tant qu'elle n'est pas posée
   const persistSync = () => { if (sync) writeJson(SYNC_KEY, sync); };
   const pendingCount = () => (sync ? Object.keys(sync.outbox).length : 0);
 
@@ -884,13 +909,13 @@ textarea.in{resize:vertical;min-height:48px}
   async function cycle() {
     if (!sync || !auth) { paintSync(); return; }
     try {
-      if (sheet.open) pullDeferred = true;   // une fenêtre est ouverte : on reçoit à sa fermeture
+      if (sheet.open || drag) pullDeferred = true;   // une fenêtre est ouverte (ou une tâche glissée) : on reçoit à la fermeture
       else {
         pullDeferred = false;
         const rows = await pullRows(sync.cursor ? new Date(tms(sync.cursor) - 30000).toISOString() : null);
         if (!sync) return;
         sync.cursor = maxCursor(rows, sync.cursor);
-        if (applyRows(rows)) { sortOrdered(S); save(); if (sheet.open) needRender = true; else renderAll(); }
+        if (applyRows(rows)) { sortOrdered(S); save(); if (sheet.open || drag) needRender = true; else renderAll(); }
         else persistSync();
       }
       await pushOutbox();
@@ -980,6 +1005,41 @@ textarea.in{resize:vertical;min-height:48px}
   const removeNote = (id) => { S.notes = S.notes.filter((n) => n.id !== id); };
   const removeIdea = (id) => { S.ideas = S.ideas.filter((n) => n.id !== id); };
   const byDue = (a, b) => { const x = a.due || "9999-99-99", y = b.due || "9999-99-99"; return x < y ? -1 : x > y ? 1 : 0; };
+  /* Ordre des tâches : la date donne l'ordre de départ, Martin l'ajuste en glissant (poignée).
+     Clé de tri = t.o quand la tâche a été placée (à la main, à sa création, au changement d'échéance),
+     sinon une clé tirée de l'échéance. Une journée vaut DAYK : un ajustement reste dans sa journée.
+     Changer l'échéance remet la tâche en fin de file de sa nouvelle date. */
+  const DAYK = 1048576, STEP = 1024, UNDATED_K = 100000 * DAYK;
+  const dayK = (due) => { if (!due) return UNDATED_K; const p = due.split("-").map(Number); return Math.round(Date.UTC(p[0], p[1] - 1, p[2]) / 86400000) * DAYK; };
+  const taskKey = (t) => (typeof t.o === "number" && isFinite(t.o) ? t.o : dayK(t.due));
+  const byKey = (a, b) => (taskKey(a) - taskKey(b)) || (a.created < b.created ? -1 : a.created > b.created ? 1 : 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  function endKey(due, selfId) {   // place en fin de file parmi les tâches à faire de cette date
+    const base = dayK(due);
+    let k = base;
+    S.tasks.forEach((x) => {
+      if (x.id === selfId || x.done || (x.due || null) !== (due || null)) return;
+      const kx = taskKey(x);
+      if (kx >= base && kx < base + DAYK / 2) k = Math.max(k, kx + STEP);
+    });
+    return k;
+  }
+  function placeAt(ids, movedId) {   // ids : nouvel ordre de la liste affichée, tâche déplacée comprise
+    const L = ids.map((id) => S.tasks.find((x) => x.id === id)).filter(Boolean);
+    const i = L.findIndex((x) => x.id === movedId);
+    if (i < 0 || L.length < 2) return false;
+    const now = nowIso();
+    const setO = (x, k) => { if (x.o !== k) { x.o = k; x.upd = now; } };
+    const prev = i > 0 ? taskKey(L[i - 1]) : null, next = i < L.length - 1 ? taskKey(L[i + 1]) : null;
+    if (prev === null) setO(L[i], next - STEP);
+    else if (next === null) setO(L[i], prev + STEP);
+    else if (next - prev >= 2) setO(L[i], Math.floor((prev + next) / 2));
+    else {   // pas de place entre les deux voisines : on décale les suivantes d'un cran
+      let last = prev + STEP;
+      setO(L[i], last);
+      for (let j = i + 1; j < L.length; j++) { if (taskKey(L[j]) > last) break; last += STEP; setO(L[j], last); }
+    }
+    return true;
+  }
   const byObjDue = (a, b) => { const x = a.due || "9999-99-99", y = b.due || "9999-99-99"; return x < y ? -1 : x > y ? 1 : a.title.localeCompare(b.title, "fr"); };
   const newest = (a, b) => (a.created < b.created ? 1 : a.created > b.created ? -1 : 0);
   const eventsFor = (d) => {
@@ -1102,18 +1162,33 @@ textarea.in{resize:vertical;min-height:48px}
     opts = opts || {};
     if (opts.small) return h("li", { class: "tk" + (t.done ? " done" : "") }, checkBtn(t), h("button", { type: "button", class: "t-open", "data-open-task": t.id }, h("span", { class: "t-title", text: t.title })));
     const d = dom(t.d);
-    const di = t.done ? { text: t.due ? "Faite · " + fDM.format(fromIso(t.due)) : "Faite", cls: "" } : dueInfo(t.due);
     const o = t.obj && !opts.noObj ? S.objectives.find((x) => x.id === t.obj) : null;
-    return h("li", { class: "task" + (t.done ? " done" : "") + (fresh.has(t.id) ? " fresh" : "") },
+    return h("li", { class: "task" + (t.done ? " done" : "") + (fresh.has(t.id) ? " fresh" : ""), "data-id": t.id },
+      opts.grip && !t.done ? gripBtn(t) : null,
       checkBtn(t),
       h("button", { type: "button", class: "t-open", "data-open-task": t.id },
-        h("span", { class: "t-title", text: t.title }),
-        h("span", { class: "t-meta" },
-          opts.noScope ? null : h("span", { class: "dchip k-" + d.color, text: scopeLabel(t) }),
-          h("span", { class: "due " + di.cls, text: di.text }),
-          t.dur ? h("span", { class: "dur", text: durLabel(t.dur) }) : null,
-          o ? h("span", { class: "t-obj", text: "↳ " + o.title }) : null,
-          t.ex ? h("span", { class: "tag", text: "exemple" }) : null)));
+        h("span", { class: "t-main" },
+          h("span", { class: "t-title", text: t.title }),
+          h("span", { class: "t-meta" },
+            opts.noScope ? null : h("span", { class: "dchip k-" + d.color, text: scopeLabel(t) }),
+            t.done ? h("span", { class: "due", text: t.due ? "Faite · " + fDM.format(fromIso(t.due)) : "Faite" }) : null,
+            t.dur ? h("span", { class: "dur", text: durLabel(t.dur) }) : null,
+            t.notes ? h("span", { class: "has-notes" }, icon("note"), "Notes") : null,
+            o ? h("span", { class: "t-obj", text: "↳ " + o.title }) : null,
+            t.ex ? h("span", { class: "tag", text: "exemple" }) : null)),
+        t.done ? null : dueBox(t.due)));
+  }
+  function dueBox(due) {   // date en gros à droite ; rien pour une tâche sans date
+    if (!due) return null;
+    const dt = fromIso(due), n = dayDiff(dt, today);
+    const d1 = Math.abs(n) < 7 ? cap(fWdS.format(dt)).replace(".", "") + " " + dt.getDate() : fDM.format(dt);
+    const d2 = n < 0 ? "retard " + (-n) + " j" : n === 0 ? "aujourd'hui" : n === 1 ? "demain" : "J-" + n;
+    return h("span", { class: "t-due" + (n < 0 ? " late" : n === 0 ? " today" : "") }, h("span", { class: "d1", text: d1 }), h("span", { class: "d2", text: d2 }));
+  }
+  function gripBtn(t) {
+    const g = h("button", { type: "button", class: "grip", "aria-label": "Déplacer « " + t.title + " » (flèches haut et bas)", title: "Glisser pour changer l'ordre" });
+    g.innerHTML = ICONS.grip;
+    return g;
   }
   function choiceRow(options, current, onPick) {
     const row = h("div", { class: "choices", role: "group" });
@@ -1169,13 +1244,19 @@ textarea.in{resize:vertical;min-height:48px}
 
   /* Fenêtre (feuille) */
   const sheet = $("#sheet"), sheetBody = $("#sheetBody");
+  let sheetCloser = null, sheetFlush = null;   // à faire à la fermeture de la fenêtre en cours, et si l'appli passe en arrière-plan (ex. enregistrer les notes)
+  function runCloser() { const f = sheetCloser; sheetCloser = null; sheetFlush = null; if (f) f(); }
+  sheet.addEventListener("cancel", runCloser);   // touche Échap : avant même la fermeture
+  sheet.addEventListener("close", () => { if (!sheet.open) runCloser(); });   // filet de sécurité ; un signal en retard (fenêtre déjà rouverte) est ignoré
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && sheetFlush) sheetFlush(); });
   function openSheet(title, nodes, actions) {
+    runCloser();   // fenêtre remplacée sans être fermée
     sheetBody.textContent = "";
     sheetBody.append(h("h3", { class: "sheet-title", id: "sheetTitle", text: title }), ...nodes, h("div", { class: "sheet-actions" }, actions));
     if (!sheet.open) { if (typeof sheet.showModal === "function") sheet.showModal(); else sheet.setAttribute("open", ""); }
     sheetBody.scrollTop = 0;
   }
-  function closeSheet() { if (sheet.open) { if (typeof sheet.close === "function") sheet.close(); else sheet.removeAttribute("open"); } }
+  function closeSheet() { if (sheet.open) { if (typeof sheet.close === "function") sheet.close(); else sheet.removeAttribute("open"); } runCloser(); }
   sheet.addEventListener("click", (e) => { if (e.target === sheet) closeSheet(); });
   function cancelBtn() { const b = h("button", { type: "button", class: "ghost" }, "Annuler"); b.addEventListener("click", closeSheet); return b; }
   function quickDates() {
@@ -1235,13 +1316,37 @@ textarea.in{resize:vertical;min-height:48px}
     dateIn.addEventListener("change", () => { st.due = validIso(dateIn.value); dueRow.set(st.due); });
     const durRow = choiceRow([{ v: 15, label: "15 min" }, { v: 30, label: "30 min" }, { v: 60, label: "1 h" }, { v: 120, label: "2 h" }, { v: null, label: "Aucune" }], st.dur, (v) => { st.dur = v; });
 
+    /* Notes de la tâche : pour une tâche existante, enregistrées pendant la frappe (rien à perdre en réunion) */
+    const notesIn = h("textarea", { id: "f-notes", class: "in notes-in", rows: "5", placeholder: "Sujets à aborder, angles, ce qui s'est dit…" });
+    notesIn.value = (task && task.notes) || "";
+    const setNotes = (x, v) => { if (v) x.notes = v; else delete x.notes; };
+    let notesTimer = null, notesSaved = false;
+    const saveNotes = () => {
+      clearTimeout(notesTimer); notesTimer = null;
+      if (!task || !S.tasks.includes(task)) return;
+      const v = notesIn.value.slice(0, 20000);
+      if ((task.notes || "") === v) return;
+      setNotes(task, v); task.upd = nowIso(); save(); notesSaved = true;
+    };
+    if (task) {
+      notesIn.addEventListener("input", () => { clearTimeout(notesTimer); notesTimer = setTimeout(saveNotes, 700); });
+      notesIn.addEventListener("blur", saveNotes);
+    }
+
     const saveBtn = h("button", { type: "button", class: "primary" }, task ? "Enregistrer" : "Ajouter la tâche");
     saveBtn.addEventListener("click", () => {
       const title = titleIn.value.trim();
       if (!title) { err.hidden = false; titleIn.focus(); return; }
       const vals = { title: title.slice(0, 300), d: st.d, th: st.th, due: st.due, dur: st.dur, obj: st.obj };
-      if (task) Object.assign(task, vals, { upd: nowIso() });
-      else { const t = mkTask(vals); S.tasks.push(t); markFresh(t.id); }
+      const notes = notesIn.value.slice(0, 20000);
+      clearTimeout(notesTimer); notesTimer = null;
+      if (task) {
+        const moved = (task.due || null) !== (vals.due || null);
+        Object.assign(task, vals, { upd: nowIso() });
+        setNotes(task, notes);
+        if (moved) task.o = endKey(vals.due, task.id);   // nouvelle date : en fin de file de ce jour-là
+      }
+      else { const t = mkTask(vals); setNotes(t, notes); t.o = endKey(vals.due, t.id); S.tasks.push(t); markFresh(t.id); }
       if (preset.fromNote) removeNote(preset.fromNote);
       if (preset.fromIdea) removeIdea(preset.fromIdea);
       save(); closeSheet(); renderAll();
@@ -1254,12 +1359,14 @@ textarea.in{resize:vertical;min-height:48px}
     const title = task ? "Modifier la tâche" : preset.fromNote ? "Transformer la note en tâche" : preset.fromIdea ? "Transformer l'idée en tâche" : "Nouvelle tâche";
     openSheet(title, [
       field("Titre", [titleIn, err], "f-title"),
+      field("Notes", task ? [notesIn, h("p", { class: "hint", text: "Enregistrées au fur et à mesure." })] : [notesIn], "f-notes"),
       field("Domaine", [domRow]),
       field("Thème", [thF.el]),
       field("Objectif", [objSel], "f-obj"),
       field("Échéance", [dueRow, dateIn]),
       field("Durée prévue (facultatif)", [durRow])
     ], actions);
+    if (task) { sheetCloser = () => { saveNotes(); if (notesSaved) renderAll(); }; sheetFlush = saveNotes; }
     if (!task && !preset.title) setTimeout(() => titleIn.focus(), 60);
   }
 
@@ -1519,7 +1626,8 @@ textarea.in{resize:vertical;min-height:48px}
   function renderTaskGroups(box, tasks, opts) {
     opts = opts || {};
     const tk = iso(today), end = iso(addDays(monday, 6));
-    const open = tasks.filter((t) => !t.done).sort(byDue);
+    const open = tasks.filter((t) => !t.done).sort(byKey);
+    const rowOpts = Object.assign({ grip: true }, opts.rowOpts);
     const groups = [
       ["g-late", "En retard", open.filter((t) => t.due && t.due < tk)],
       ["g-today", "Aujourd'hui", open.filter((t) => t.due === tk)],
@@ -1532,7 +1640,7 @@ textarea.in{resize:vertical;min-height:48px}
       shown += g[2].length;
       box.append(h("div", { class: "group " + g[0] },
         h("div", { class: "group-h" }, h("span", { text: g[1] }), h("span", { class: "n", text: String(g[2].length) })),
-        h("ul", { class: "tasks" }, g[2].map((t) => taskRow(t, opts.rowOpts)))));
+        h("ul", { class: "tasks" }, g[2].map((t) => taskRow(t, rowOpts)))));
     });
     return shown;
   }
@@ -1717,7 +1825,7 @@ textarea.in{resize:vertical;min-height:48px}
   }
   function objCard(o) {
     const st = objStats(o), d = dom(o.d);
-    const open = st.tasks.filter((x) => !x.done).sort(byDue), fin = st.tasks.filter((x) => x.done);
+    const open = st.tasks.filter((x) => !x.done).sort(byKey), fin = st.tasks.filter((x) => x.done);
     const rowOpts = (x) => ({ noObj: true, noScope: x.d === o.d && (x.th || null) === (o.th || null) });
     const edit = h("button", { type: "button", class: "icon-btn small", "data-act": "obj-edit", "data-id": o.id, "aria-label": "Modifier l'objectif " + o.title }, icon("pencil"));
     return h("section", { class: "panel ocard" },
@@ -1744,7 +1852,7 @@ textarea.in{resize:vertical;min-height:48px}
     const objs = S.objectives.filter(m).sort(byObjDue);
     const tasks = S.tasks.filter(m);
     const dated = tasks.filter((x) => x.due);
-    const undated = tasks.filter((x) => !x.done && !x.due && !x.obj);
+    const undated = tasks.filter((x) => !x.done && !x.due && !x.obj).sort(byKey);
     const ideas = S.ideas.filter(m).sort(newest);
     const back = h("button", { type: "button", class: "icon-btn", "data-act": "theme-back", "aria-label": "Revenir aux thèmes" }, icon("back"));
     const crumb = h("div", { class: "crumb k-" + d.color }, h("span", { class: "dom", text: d.label }), h("span", { class: "sep", text: "›" }), h("span", { text: t ? t.label : "Sans thème" }));
@@ -1766,7 +1874,7 @@ textarea.in{resize:vertical;min-height:48px}
     if (!renderTaskGroups(up, dated, { datedOnly: true, rowOpts: { noScope: true } })) up.append(h("p", { class: "empty", text: "Rien de daté pour l'instant." }));
     right.append(up);
     const und = h("section", { class: "panel" }, h("h2", null, h("span", { text: "Tâches sans date" }), h("small", { text: undated.length ? String(undated.length) : "" })));
-    if (undated.length) und.append(h("ul", { class: "tasks" }, undated.map((x) => taskRow(x, { noScope: true }))));
+    if (undated.length) und.append(h("ul", { class: "tasks" }, undated.map((x) => taskRow(x, { noScope: true, grip: true }))));
     else und.append(h("p", { class: "empty", text: "Aucune." }));
     right.append(und);
     const idp = h("section", { class: "panel" }, h("h2", null, h("span", { text: "Idées" }), h("small", { text: ideas.length ? String(ideas.length) : "" })));
@@ -1806,7 +1914,7 @@ textarea.in{resize:vertical;min-height:48px}
     for (let i = 0; i < 7; i++) {
       const d = addDays(monday, i), key = iso(d);
       const evs = eventsFor(d).filter(passD);
-      const tks = S.tasks.filter((t) => passD(t) && t.due === key);
+      const tks = S.tasks.filter((t) => passD(t) && t.due === key).sort(byKey);
       const card = h("section", { class: "day" + (key === iso(today) ? " today" : "") + (i > 4 ? " weekend" : ""), "aria-label": cap(fLong.format(d)) },
         h("div", { class: "day-h" }, h("span", { text: cap(fWdS.format(d)).replace(".", "") }), h("span", { text: pad(d.getDate()) + "/" + pad(d.getMonth() + 1) })));
       evs.forEach((e) => card.append(h("div", { class: "ev k-" + dom(e.d).color }, h("b", { text: e.allDay ? "Journée · exemple" : e.s + "-" + e.e + " · exemple" }), h("span", { text: e.title }))));
@@ -1842,6 +1950,86 @@ textarea.in{resize:vertical;min-height:48px}
     setView(b.dataset.view);
     renderAll();
   }));
+
+  /* Ordre manuel : glisser une tâche par sa poignée (doigt, stylet, souris), ou flèches haut et bas au clavier.
+     La tâche ne bouge que dans sa liste (son groupe de dates) ; les dates ne changent jamais. */
+  const listItems = (ul) => Array.from(ul.children).filter((x) => x.matches("li.task[data-id]"));
+  function commitOrder(items, from, to) {
+    const ids = items.map((x) => x.dataset.id), moved = ids[from];
+    ids.splice(from, 1); ids.splice(to, 0, moved);
+    if (!placeAt(ids, moved)) return null;
+    save();
+    return moved;
+  }
+  function dragUpdate() {
+    const g = drag;
+    if (!g) return;
+    const dy = g.cy + window.scrollY - g.y0, r = g.rects, i = g.idx;
+    g.li.style.transform = "translateY(" + dy + "px)";
+    const mid = r[i].top + r[i].h / 2 + dy;
+    let to = i;
+    for (let j = i + 1; j < r.length; j++) if (mid > r[j].top + r[j].h / 2) to = j;
+    for (let j = i - 1; j >= 0; j--) if (mid < r[j].top + r[j].h / 2) to = j;
+    g.to = to;
+    const H = r[i].h;
+    g.items.forEach((x, j) => {
+      if (j === i) return;
+      const s = (i < to && j > i && j <= to) ? -H : (to < i && j >= to && j < i) ? H : 0;
+      x.style.transform = s ? "translateY(" + s + "px)" : "";
+    });
+  }
+  function dragLoop() {   // près du haut ou du bas de l'écran, la page défile toute seule
+    if (!drag) return;
+    const edge = 70, vh = window.innerHeight, y = drag.cy;
+    const v = y < edge ? -Math.ceil((edge - y) / 5) : y > vh - edge ? Math.ceil((y - (vh - edge)) / 5) : 0;
+    if (v) { window.scrollBy(0, v); dragUpdate(); }
+    drag.raf = requestAnimationFrame(dragLoop);
+  }
+  function dragEnd(commit) {
+    const g = drag;
+    if (!g) return;
+    drag = null;
+    cancelAnimationFrame(g.raf);
+    g.items.forEach((x) => { x.style.transform = ""; });
+    g.li.classList.remove("dragging"); g.ul.classList.remove("sorting"); document.body.classList.remove("is-dragging");
+    const moved = commit && g.to !== g.idx ? commitOrder(g.items, g.idx, g.to) : null;
+    if (moved || needRender) { needRender = false; if (moved) markFresh(moved); renderAll(); }
+    if (pullDeferred && auth && sync && !sheet.open) syncNow();
+  }
+  document.addEventListener("pointerdown", (ev) => {
+    const gr = ev.target instanceof Element ? ev.target.closest(".grip") : null;
+    if (!gr || drag || ev.isPrimary === false || (ev.pointerType === "mouse" && ev.button !== 0)) return;
+    const li = gr.closest("li.task"), ul = li && li.parentElement;
+    if (!ul) return;
+    const items = listItems(ul);
+    if (items.length < 2) return;
+    ev.preventDefault();
+    const sy = window.scrollY, idx = items.indexOf(li);
+    drag = { li: li, ul: ul, items: items, idx: idx, to: idx, pid: ev.pointerId, y0: ev.clientY + sy, cy: ev.clientY, raf: 0,
+      rects: items.map((x) => { const r = x.getBoundingClientRect(); return { top: r.top + sy, h: r.height }; }) };
+    try { gr.setPointerCapture(ev.pointerId); } catch (e) { /* capture impossible : le document suit quand même */ }
+    li.classList.add("dragging"); ul.classList.add("sorting"); document.body.classList.add("is-dragging");
+    drag.raf = requestAnimationFrame(dragLoop);
+  });
+  document.addEventListener("pointermove", (ev) => { if (!drag || ev.pointerId !== drag.pid) return; ev.preventDefault(); drag.cy = ev.clientY; dragUpdate(); });
+  document.addEventListener("pointerup", (ev) => { if (drag && ev.pointerId === drag.pid) { drag.cy = ev.clientY; dragUpdate(); dragEnd(true); } });
+  document.addEventListener("pointercancel", (ev) => { if (drag && ev.pointerId === drag.pid) dragEnd(false); });
+  // iPad et iPhone : toucher la poignée ne fait pas défiler la page
+  document.addEventListener("touchstart", (ev) => { if (ev.target instanceof Element && ev.target.closest(".grip")) ev.preventDefault(); }, { passive: false });
+  document.addEventListener("touchmove", (ev) => { if (drag) ev.preventDefault(); }, { passive: false });
+  document.addEventListener("keydown", (ev) => {
+    const gr = ev.target instanceof Element ? ev.target.closest(".grip") : null;
+    if (!gr || drag || (ev.key !== "ArrowUp" && ev.key !== "ArrowDown")) return;
+    ev.preventDefault();
+    const li = gr.closest("li.task"), items = li && li.parentElement ? listItems(li.parentElement) : [];
+    const i = items.indexOf(li), to = i + (ev.key === "ArrowUp" ? -1 : 1);
+    if (i < 0 || to < 0 || to >= items.length) return;
+    const moved = commitOrder(items, i, to);
+    if (!moved) return;
+    renderAll();
+    const back = Array.from(document.querySelectorAll("li.task[data-id] .grip")).find((x) => x.closest("li").dataset.id === moved);
+    if (back) back.focus();
+  });
 
   /* Actions (délégation) */
   let rerenderTimer = null;
@@ -1964,7 +2152,7 @@ textarea.in{resize:vertical;min-height:48px}
   window.addEventListener("offline", paintSync);
   window.addEventListener("storage", (e) => {   // un autre onglet du même appareil a écrit
     if (e.key === AUTH_KEY) { auth = readJson(AUTH_KEY); paintSync(); return; }
-    if ((e.key !== STORE && e.key !== SYNC_KEY) || sheet.open) return;
+    if ((e.key !== STORE && e.key !== SYNC_KEY) || sheet.open || drag) return;
     S = load(); sync = readJson(SYNC_KEY); auth = readJson(AUTH_KEY);
     renderAll();
   });
