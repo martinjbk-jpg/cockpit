@@ -308,6 +308,11 @@ textarea.in{resize:vertical;min-height:48px}
 .swatch{width:28px;height:28px;border-radius:50%;border:2px solid transparent;background:var(--k);padding:0}
 .swatch[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 2px var(--panel)}
 
+.sync{white-space:nowrap}
+.sync.ok{color:var(--ok)}
+.sync.warn{color:var(--late);border-color:var(--late)}
+.loginform{display:flex;flex-direction:column;gap:8px}
+
 .foot{margin:0;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
 .foot .danger{min-height:32px;padding:4px 10px;font-size:12.5px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));max-width:min(560px,calc(100% - 32px));background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 14px;font-size:14px;box-shadow:var(--shadow);z-index:20}
@@ -342,6 +347,7 @@ textarea.in{resize:vertical;min-height:48px}
       <h1 id="dateLabel">Aujourd'hui</h1>
     </div>
     <div class="clockbox">
+      <button type="button" id="syncBtn" class="ghost sync" data-act="settings">Non synchronisé</button>
       <button type="button" id="wakeBtn" class="ghost" aria-pressed="false">Garder l'écran allumé</button>
       <button type="button" id="settingsBtn" class="icon-btn" data-act="settings" aria-label="Réglages"></button>
       <div class="clock" id="clock">--:--</div>
@@ -609,19 +615,20 @@ textarea.in{resize:vertical;min-height:48px}
     s.ideas = s.ideas.filter((i) => !i.ex);
   }
 
+  const ordOf = (x) => (typeof x.o === "number" && isFinite(x.o) ? x.o : undefined);
   function sanitize(d) {
     const s = defaults();
     const str = (v, n) => (typeof v === "string" ? v : "").slice(0, n);
     if (Array.isArray(d.domains)) {
       const doms = d.domains.filter((x) => x && typeof x.id === "string" && x.id && typeof x.label === "string")
-        .map((x) => ({ id: x.id.slice(0, 64), label: x.label.slice(0, 40) || "Domaine", color: COLORS.includes(x.color) ? x.color : "slate" }));
+        .map((x) => ({ id: x.id.slice(0, 64), label: x.label.slice(0, 40) || "Domaine", color: COLORS.includes(x.color) ? x.color : "slate", o: ordOf(x) }));
       if (doms.length) s.domains = doms;
     }
     const domIds = new Set(s.domains.map((x) => x.id));
     const fixD = (v) => (domIds.has(v) ? v : s.domains[0].id);
     const base = (x) => ({ id: str(x.id, 64) || uid(), ex: !!x.ex, created: str(x.created, 40) || nowIso(), upd: str(x.upd, 40) || nowIso() });
     s.themes = (Array.isArray(d.themes) ? d.themes : []).filter((x) => x && typeof x.id === "string" && x.id && domIds.has(x.d) && str(x.label, 60).trim())
-      .map((x) => ({ id: x.id.slice(0, 64), d: x.d, label: str(x.label, 60), created: str(x.created, 40) || nowIso(), upd: str(x.upd, 40) || nowIso() }));
+      .map((x) => ({ id: x.id.slice(0, 64), d: x.d, label: str(x.label, 60), created: str(x.created, 40) || nowIso(), upd: str(x.upd, 40) || nowIso(), o: ordOf(x) }));
     const thDom = new Map(s.themes.map((t) => [t.id, t.d]));
     const fixTh = (th, dd) => (th && thDom.get(th) === dd ? th : null);
     s.notes = (Array.isArray(d.notes) ? d.notes : []).filter((x) => x && str(x.text, 4000).trim())
@@ -673,8 +680,291 @@ textarea.in{resize:vertical;min-height:48px}
     seedExamples(s);
     return s;
   }
+  /* Synchronisation entre appareils (Supabase)
+     Chaque élément (domaine, thème, objectif, tâche, idée, note) est une ligne sur le serveur.
+     À chaque enregistrement, l'appli compare l'état à sa dernière photo (snap) et met les différences
+     dans une file d'envoi (outbox), datées de l'heure de la modification. Pour un même élément,
+     la modification la plus récente l'emporte ; une suppression part comme une ligne « supprimée ».
+     L'affichage (clair, sombre) reste propre à chaque appareil. */
+  const SB_URL = "https://rwjcrwwabvfpdoajusoc.supabase.co";
+  const SB_KEY = "sb_publishable_IS-r0jwhsL5GaE0keWWzfQ_QL4-4eXl";
+  const AUTH_KEY = "cockpit.auth", SYNC_KEY = "cockpit.sync";
+  const KINDS = { domain: "domains", theme: "themes", objective: "objectives", task: "tasks", idea: "ideas", note: "notes" };
+  const ORDERED = ["domains", "themes"];
+  const PAGE = 500;
+  class AuthError extends Error {}
+  const readJson = (k) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch (e) { return null; } };
+  const writeJson = (k, v) => { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* stockage indisponible */ } };
+  let auth = readJson(AUTH_KEY);   // { access_token, refresh_token, expires_at, user: { id, email } }
+  let sync = readJson(SYNC_KEY);   // { user, email, cursor, snap: { clé: json }, outbox: { clé: { kind, id, data, upd, deleted } }, last }
+  if (sync && (typeof sync.user !== "string" || !sync.snap || typeof sync.snap !== "object" || !sync.outbox || typeof sync.outbox !== "object")) { sync = null; writeJson(SYNC_KEY, null); }
+  if (auth && (!auth.access_token || !auth.refresh_token || !auth.user || !sync || auth.user.id !== sync.user)) { auth = null; writeJson(AUTH_KEY, null); }
+  const syncUi = { state: "idle", msg: "" };   // idle | ok | offline | auth | error
+  let pullDeferred = false, needRender = false, pushTimer = null, refreshing = null, running = null, again = false;
+  const persistSync = () => { if (sync) writeJson(SYNC_KEY, sync); };
+  const pendingCount = () => (sync ? Object.keys(sync.outbox).length : 0);
+
+  function tms(s) {   // horodatage du serveur ou de l'appareil, en millisecondes (formats Postgres compris)
+    const m = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(?:\.(\d+))?(Z|[+-]\d{2}(?::?\d{2})?)?$/.exec(String(s || ""));
+    if (!m) return 0;
+    let t = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6], m[7] ? Number((m[7] + "00").slice(0, 3)) : 0);
+    if (m[8] && m[8] !== "Z") { const sg = m[8][0] === "-" ? -1 : 1, hh = Number(m[8].slice(1, 3)), mm = m[8].length > 3 ? Number(m[8].slice(-2)) : 0; t -= sg * (hh * 60 + mm) * 60000; }
+    return t;
+  }
+  function canon(o) { const out = {}; Object.keys(o).sort().forEach((k) => { if (o[k] !== undefined) out[k] = o[k]; }); return JSON.stringify(out); }
+  function ensureOrder(s) {   // les domaines et les thèmes gardent leur ordre d'un appareil à l'autre
+    ORDERED.forEach((a) => {
+      let max = -1;
+      s[a].forEach((x) => { if (typeof x.o === "number" && x.o > max) max = x.o; });
+      s[a].forEach((x) => { if (typeof x.o !== "number") x.o = ++max; });
+    });
+  }
+  const byOrder = (a, b) => ((a.o || 0) - (b.o || 0)) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  function sortOrdered(s) { ORDERED.forEach((a) => s[a].sort(byOrder)); }
+  function flatten(s) {
+    const out = {};
+    Object.keys(KINDS).forEach((kind) => s[KINDS[kind]].forEach((x) => { out[kind + ":" + x.id] = canon(x); }));
+    return out;
+  }
+  function entry(k, data, upd) { const i = k.indexOf(":"); return { kind: k.slice(0, i), id: k.slice(i + 1), data: data, upd: upd, deleted: data === null }; }
+  function recordLocal() {
+    if (!sync) return;
+    const cur = flatten(S), now = nowIso();
+    let n = 0;
+    for (const k in cur) if (cur[k] !== sync.snap[k]) { sync.outbox[k] = entry(k, cur[k], now); n++; }
+    for (const k in sync.snap) if (!(k in cur)) { sync.outbox[k] = entry(k, null, now); n++; }
+    sync.snap = cur;
+    persistSync();
+    if (n) schedulePush();
+  }
+  function schedulePush() {
+    paintSync();
+    if (!auth) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(syncNow, 1200);
+  }
+
+  /* Connexion */
+  function storeAuth(r, prevUser) {
+    const u = r.user && r.user.id ? { id: r.user.id, email: r.user.email || "" } : prevUser;
+    auth = { access_token: r.access_token, refresh_token: r.refresh_token, expires_at: r.expires_at || Math.floor(Date.now() / 1000) + (r.expires_in || 3600), user: u };
+    writeJson(AUTH_KEY, auth);
+  }
+  async function authCall(grant, body) {
+    const res = await fetch(SB_URL + "/auth/v1/token?grant_type=" + grant, { method: "POST", headers: { apikey: SB_KEY, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    let data = null;
+    try { data = await res.json(); } catch (e) { /* réponse vide */ }
+    return { status: res.status, ok: res.ok, data: data };
+  }
+  function refreshSession() {
+    if (refreshing) return refreshing;
+    refreshing = (async () => {
+      const stored = readJson(AUTH_KEY);
+      if (stored && auth && stored.user && auth.user && stored.user.id === auth.user.id && stored.refresh_token !== auth.refresh_token) {
+        auth = stored;   // un autre onglet a déjà renouvelé la session
+        if (auth.expires_at - 60 > Date.now() / 1000) return;
+      }
+      if (!auth) throw new AuthError("pas de session");
+      const r = await authCall("refresh_token", { refresh_token: auth.refresh_token });
+      if (r.ok && r.data && r.data.access_token) { storeAuth(r.data, auth.user); return; }
+      if (r.status >= 400 && r.status < 500) { auth = null; writeJson(AUTH_KEY, null); throw new AuthError("session expirée"); }
+      throw new Error("renouvellement de session : code " + r.status);
+    })().finally(() => { refreshing = null; });
+    return refreshing;
+  }
+  async function api(method, path, body, retried) {
+    if (!auth) throw new AuthError("pas de session");
+    if (auth.expires_at - 60 < Date.now() / 1000) await refreshSession();
+    const res = await fetch(SB_URL + path, { method: method, cache: "no-store", headers: { apikey: SB_KEY, Authorization: "Bearer " + auth.access_token, "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+    if (res.status === 401 && !retried) { await refreshSession(); return api(method, path, body, true); }
+    const txt = await res.text();
+    if (!res.ok) throw new Error("code " + res.status + " " + txt.slice(0, 160));
+    return txt ? JSON.parse(txt) : null;
+  }
+
+  /* Échanges avec le serveur */
+  async function pullRows(since) {
+    const all = [];
+    for (let off = 0; ; off += PAGE) {
+      let q = "/rest/v1/items?select=kind,id,data,upd,deleted,server_upd&order=server_upd.asc,kind.asc,id.asc&limit=" + PAGE + "&offset=" + off;
+      if (since) q += "&server_upd=gte." + encodeURIComponent(since);
+      const page = await api("GET", q);
+      if (!Array.isArray(page)) throw new Error("réponse inattendue du serveur");
+      all.push(...page);
+      if (page.length < PAGE) return all;
+    }
+  }
+  function maxCursor(rows, cur) {
+    let best = cur || null, m = cur ? tms(cur) : 0;
+    rows.forEach((r) => { const t = tms(r.server_upd); if (t > m) { m = t; best = r.server_upd; } });
+    return best;
+  }
+  function validItem(kind, d, id) {
+    if (!d || typeof d !== "object" || Array.isArray(d) || d.id !== id) return false;
+    if (kind === "task" || kind === "objective") return typeof d.title === "string" && typeof d.d === "string";
+    if (kind === "idea") return typeof d.text === "string" && typeof d.d === "string";
+    if (kind === "note") return typeof d.text === "string";
+    if (kind === "theme") return typeof d.label === "string" && typeof d.d === "string";
+    if (kind === "domain") return typeof d.label === "string" && COLORS.includes(d.color);
+    return false;
+  }
+  function applyRows(rows) {   // reçoit les nouveautés des autres appareils ; renvoie true si quelque chose a changé
+    let changed = false;
+    rows.forEach((r) => {
+      const arr = KINDS[r.kind];
+      if (!arr) return;
+      const k = r.kind + ":" + r.id, pend = sync.outbox[k];
+      if (pend) { if (tms(pend.upd) >= tms(r.upd)) return; delete sync.outbox[k]; }
+      const list = S[arr];
+      if (r.deleted) {
+        const i = list.findIndex((x) => x.id === r.id);
+        if (i >= 0 && !(arr === "domains" && list.length === 1)) { list.splice(i, 1); changed = true; }
+        delete sync.snap[k];
+        return;
+      }
+      if (!validItem(r.kind, r.data, r.id)) return;
+      const c = canon(r.data);
+      if (sync.snap[k] === c) return;
+      const cur = list.find((x) => x.id === r.id);
+      if (cur) { Object.keys(cur).forEach((key) => { delete cur[key]; }); Object.assign(cur, r.data); }
+      else list.push(Object.assign({}, r.data));
+      sync.snap[k] = c;
+      changed = true;
+    });
+    return changed;
+  }
+  function adopt(rows) {   // première connexion de cet appareil
+    const live = new Map(), dead = new Set();
+    rows.forEach((r) => {
+      if (!KINDS[r.kind]) return;
+      const k = r.kind + ":" + r.id;
+      if (r.deleted) dead.add(k); else if (validItem(r.kind, r.data, r.id)) live.set(k, r);
+    });
+    const fresh = { user: auth.user.id, email: auth.user.email || "", cursor: maxCursor(rows, null), snap: {}, outbox: {}, last: null };
+    if (!live.size) { sync = fresh; save(); return "first"; }   // compte vide : tout ce qui est ici part sur le serveur
+    const N = { v: 3, domains: [], themes: [], notes: [], ideas: [], objectives: [], tasks: [], settings: S.settings };
+    live.forEach((r, k) => { N[KINDS[r.kind]].push(Object.assign({}, r.data)); fresh.snap[k] = canon(r.data); });
+    sortOrdered(N);
+    const keep = (kind, x) => { const k = kind + ":" + x.id; return !live.has(k) && !dead.has(k); };
+    const copy = (x) => { const c = Object.assign({}, x); delete c.o; return c; };
+    S.domains.forEach((d) => { if (keep("domain", d)) N.domains.push(copy(d)); });
+    const thMap = new Map();   // thèmes de cet appareil → thème du compte de même nom (pas de doublon)
+    S.themes.forEach((t) => {
+      const k = "theme:" + t.id;
+      if (live.has(k)) return;
+      if (dead.has(k)) { thMap.set(t.id, null); return; }
+      const same = N.themes.find((x) => x.d === t.d && norm(x.label) === norm(t.label));
+      if (same) thMap.set(t.id, same.id); else N.themes.push(copy(t));
+    });
+    [["objective", "objectives"], ["task", "tasks"], ["idea", "ideas"], ["note", "notes"]].forEach(([kind, arr]) => {
+      S[arr].forEach((x) => {
+        if (x.ex || !keep(kind, x)) return;   // les exemples de cet appareil sont laissés de côté
+        const c = Object.assign({}, x);
+        if (kind !== "note" && c.th && thMap.has(c.th)) c.th = thMap.get(c.th);
+        N[arr].push(c);
+      });
+    });
+    sync = fresh;
+    S = sanitize(N);
+    save();   // ce qui vient de cet appareil part sur le serveur
+    return "adopt";
+  }
+  async function pushOutbox() {
+    for (let guard = 0; guard < 50; guard++) {
+      if (!sync) return;
+      const ents = Object.entries(sync.outbox).slice(0, 400);
+      if (!ents.length) return;
+      const batch = ents.map(([, e]) => ({ kind: e.kind, id: e.id, data: e.data == null ? null : JSON.parse(e.data), upd: e.upd, deleted: !!e.deleted }));
+      await api("POST", "/rest/v1/rpc/push_items", { batch: batch });
+      if (!sync) return;
+      ents.forEach(([k, e]) => { const c = sync.outbox[k]; if (c && c.upd === e.upd && c.data === e.data) delete sync.outbox[k]; });
+      persistSync();
+    }
+  }
+  async function cycle() {
+    if (!sync || !auth) { paintSync(); return; }
+    try {
+      if (sheet.open) pullDeferred = true;   // une fenêtre est ouverte : on reçoit à sa fermeture
+      else {
+        pullDeferred = false;
+        const rows = await pullRows(sync.cursor ? new Date(tms(sync.cursor) - 30000).toISOString() : null);
+        if (!sync) return;
+        sync.cursor = maxCursor(rows, sync.cursor);
+        if (applyRows(rows)) { sortOrdered(S); save(); if (sheet.open) needRender = true; else renderAll(); }
+        else persistSync();
+      }
+      await pushOutbox();
+      if (!sync) return;
+      sync.last = nowIso();
+      persistSync();
+      syncUi.state = "ok"; syncUi.msg = "";
+    } catch (e) {
+      if (e instanceof AuthError) syncUi.state = "auth";
+      else if (e instanceof TypeError || navigator.onLine === false) syncUi.state = "offline";
+      else { syncUi.state = "error"; syncUi.msg = String((e && e.message) || e).slice(0, 200); }
+    }
+    paintSync();
+  }
+  function syncNow() {
+    if (running) { again = true; return running; }
+    running = (async () => { do { again = false; await cycle(); } while (again); })().finally(() => { running = null; });
+    return running;
+  }
+  async function login(email, password) {
+    const r = await authCall("password", { email: email, password: password });
+    if (!r.ok || !r.data || !r.data.access_token || !r.data.user) {
+      const code = r.data && (r.data.error_code || r.data.error);
+      if (code === "invalid_credentials" || code === "invalid_grant") throw new Error("Adresse ou mot de passe incorrect.");
+      throw new Error("Connexion refusée par le serveur (code " + r.status + ").");
+    }
+    storeAuth(r.data, null);
+    if (sync && sync.user === auth.user.id) { sync.email = auth.user.email || sync.email; persistSync(); await syncNow(); return "resume"; }
+    try {
+      const rows = await pullRows(null);
+      const mode = adopt(rows);
+      renderAll();
+      await syncNow();
+      return mode;
+    } catch (e) { auth = null; writeJson(AUTH_KEY, null); paintSync(); throw e; }
+  }
+  async function logout() {
+    if (auth && sync && pendingCount()) await syncNow();
+    const a = auth;
+    clearTimeout(pushTimer);
+    auth = null; sync = null; syncUi.state = "idle"; syncUi.msg = "";
+    writeJson(AUTH_KEY, null); writeJson(SYNC_KEY, null);
+    paintSync();
+    if (a) fetch(SB_URL + "/auth/v1/logout?scope=local", { method: "POST", headers: { apikey: SB_KEY, Authorization: "Bearer " + a.access_token } }).catch(() => {});
+  }
+
+  /* Ce que l'écran dit de la synchronisation */
+  function syncLabel() {
+    const n = pendingCount();
+    if (!sync) return { t: "Non synchronisé", cls: "", foot: "Tes données restent sur cet appareil. Connecte-toi dans les réglages pour les retrouver sur l'iPad, l'iPhone et le PC." };
+    if (!auth) return { t: "Reconnecte-toi", cls: "warn", foot: "Session expirée : reconnecte-toi dans les réglages. Ce que tu fais en attendant est gardé et partira à la reconnexion." };
+    if (syncUi.state === "offline" || navigator.onLine === false) return { t: n ? "Hors ligne · " + n + " en attente" : "Hors ligne", cls: "warn", foot: "Pas de connexion : tes modifications restent sur cet appareil et partiront au retour du réseau." };
+    if (syncUi.state === "error") return { t: "Synchro en échec", cls: "warn", foot: "La dernière synchronisation a échoué, l'appli réessaie toute seule. Le détail est dans les réglages." };
+    if (n) return { t: n + " en attente", cls: "", foot: "Envoi en cours vers ton compte." };
+    return { t: "Synchronisé", cls: "ok", foot: "Synchronisé avec ton compte" + (sync.last ? " · dernière synchro " + ago(sync.last) : "") + "." };
+  }
+  function paintSync() {
+    const b = document.getElementById("syncBtn"), f = document.getElementById("syncFoot");
+    const L = syncLabel();
+    if (b) {
+      b.className = "ghost sync" + (L.cls ? " " + L.cls : "");
+      b.textContent = (L.cls === "ok" ? "✓ " : "") + L.t;
+      b.setAttribute("aria-label", "Synchronisation : " + L.t + ". Ouvrir les réglages.");
+    }
+    if (f) f.textContent = L.foot;
+  }
+  window.cockpitSync = { now: () => syncNow(), state: () => ({ auth: !!auth, user: sync ? sync.user : null, pending: pendingCount(), ui: syncUi.state, msg: syncUi.msg, cursor: sync ? sync.cursor : null }) };
+
   let S = load();
-  function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) { /* stockage indisponible */ } }
+  function save() {
+    ensureOrder(S);
+    try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) { /* stockage indisponible */ }
+    recordLocal();
+  }
   save();
 
   /* Petites aides */
@@ -1104,6 +1394,50 @@ textarea.in{resize:vertical;min-height:48px}
     return target;
   }
   function clearExamples() { removeExamplesFrom(S); save(); }
+  function syncField() {
+    const nodes = [];
+    if (sync && auth) {
+      const n = pendingCount();
+      nodes.push(h("p", { class: "hint", text: "Connecté avec " + (auth.user.email || sync.email || "ton compte") + ". Tes tâches, notes, idées, objectifs, domaines et thèmes sont les mêmes sur tous tes appareils connectés. L'affichage (clair ou sombre) reste propre à chaque appareil." }));
+      nodes.push(h("p", { class: "hint", text: (sync.last ? "Dernière synchro " + ago(sync.last) : "Pas encore synchronisé") + (n ? " · " + plural(n, "modification en attente", "modifications en attente") : "") + "." }));
+      if (syncUi.state === "offline") nodes.push(h("p", { class: "err", text: "Pas de connexion pour l'instant : tes modifications partiront au retour du réseau." }));
+      if (syncUi.state === "error" && syncUi.msg) nodes.push(h("p", { class: "err", text: "Dernier essai en échec : " + syncUi.msg }));
+      const now = h("button", { type: "button", class: "act small" }, "Synchroniser maintenant");
+      now.addEventListener("click", () => {
+        now.disabled = true; now.textContent = "Synchronisation…";
+        syncNow().then(() => { if (sheet.open) openSettings(); toast(syncUi.state === "ok" ? "Synchronisé" : "Synchronisation impossible pour l'instant"); });
+      });
+      const out = dangerButton("Se déconnecter", "Confirmer (tes données restent ici)", () => {
+        logout().then(() => { if (sheet.open) openSettings(); renderAll(); toast("Déconnecté. Tes données restent sur cet appareil."); });
+      });
+      nodes.push(h("div", { class: "setrow" }, now, out));
+      return field("Synchronisation", nodes);
+    }
+    nodes.push(h("p", { class: "hint", text: sync ? "Ta session a expiré. Reconnecte-toi : ce que tu as fait entre-temps est gardé et partira à la connexion." : "Connecte-toi pour retrouver les mêmes données sur l'iPad, l'iPhone et le PC. Le mot de passe se tape une fois par appareil." }));
+    const email = h("input", { type: "email", id: "f-email", class: "in", name: "email", autocomplete: "username", inputmode: "email", autocapitalize: "none", spellcheck: "false", placeholder: "Adresse mail", "aria-label": "Adresse mail" });
+    email.value = (sync && sync.email) || "";
+    const pass = h("input", { type: "password", id: "f-pass", class: "in", name: "password", autocomplete: "current-password", placeholder: "Mot de passe", "aria-label": "Mot de passe" });
+    const err = h("p", { class: "err", hidden: true });
+    const go = h("button", { type: "submit", class: "primary" }, "Se connecter");
+    const form = h("form", { class: "loginform", id: "loginForm" }, email, pass, err, h("div", null, go));
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const em = email.value.trim(), pw = pass.value;
+      if (!em || !pw) { err.textContent = "Entre ton adresse et ton mot de passe."; err.hidden = false; return; }
+      go.disabled = true; go.textContent = "Connexion…"; err.hidden = true;
+      login(em, pw).then((mode) => {
+        if (sheet.open) openSettings();
+        renderAll();
+        toast(mode === "first" ? "Connecté : tes données partent sur ton compte." : mode === "adopt" ? "Connecté : les données de ton compte sont arrivées ici." : "Reconnecté.");
+      }).catch((e2) => {
+        go.disabled = false; go.textContent = "Se connecter";
+        err.textContent = e2 instanceof TypeError ? "Pas de connexion internet. Réessaie une fois en ligne." : ((e2 && e2.message) || "Connexion impossible.");
+        err.hidden = false;
+      });
+    });
+    nodes.push(form);
+    return field("Synchronisation", nodes);
+  }
   function openSettings() {
     const themeRow = choiceRow([{ v: "light", label: "Clair" }, { v: "dark", label: "Sombre" }, { v: "auto", label: "Comme l'appareil" }], S.settings.theme, (v) => { S.settings.theme = v; save(); applyTheme(); });
     const list = h("div", { class: "setlist" });
@@ -1145,12 +1479,11 @@ textarea.in{resize:vertical;min-height:48px}
       const last = list.querySelector(".domblock:last-child .setrow input");
       if (last) { last.focus(); last.select(); }
     });
-    const nodes = [field("Affichage", [themeRow]), field("Domaines et thèmes", [list, addDom])];
+    const nodes = [syncField(), field("Affichage", [themeRow]), field("Domaines et thèmes", [list, addDom])];
     if (hasExamples()) nodes.push(field("Exemples", [
-      h("p", { class: "hint", text: "Les éléments marqués « exemple » servent à découvrir l'appli. Ce que tu as ajouté toi-même est gardé." }),
+      h("p", { class: "hint", text: "Les éléments marqués « exemple » servent à découvrir l'appli. Ce que tu as ajouté toi-même est gardé." + (sync ? " Effacés ici, ils disparaissent aussi des autres appareils." : "") }),
       h("div", null, dangerButton("Effacer les exemples", "Touche encore pour confirmer", () => { clearExamples(); closeSheet(); renderAll(); toast("Exemples effacés"); }))
     ]));
-    nodes.push(h("p", { class: "hint", text: "Tes données sont enregistrées sur cet appareil. La synchronisation avec l'iPhone et le PC arrive à l'étape suivante." }));
     const close = h("button", { type: "button", class: "primary" }, "Fermer");
     close.addEventListener("click", closeSheet);
     openSheet("Réglages", nodes, [close]);
@@ -1485,8 +1818,9 @@ textarea.in{resize:vertical;min-height:48px}
   function renderFoot() {
     const f = $("#foot");
     f.textContent = "";
-    f.append(h("span", { text: "Tes données restent sur cet appareil pour l'instant : la synchronisation avec l'iPhone et le PC arrive à l'étape suivante." }));
+    f.append(h("span", { id: "syncFoot" }));
     if (hasExamples()) f.append(dangerButton("Effacer les exemples", "Touche encore pour confirmer", () => { clearExamples(); renderAll(); toast("Exemples effacés"); }));
+    paintSync();
   }
   function renderAll() {
     renderHeader();
@@ -1619,11 +1953,28 @@ textarea.in{resize:vertical;min-height:48px}
     if (view === "jour" && !sheet.open) { renderChrono(); renderAgenda(); }
   }
 
+  /* Synchronisation : quand recevoir et envoyer */
+  sheet.addEventListener("close", () => {
+    if (needRender) { needRender = false; renderAll(); }
+    if (pullDeferred && auth && sync) syncNow();
+  });
+  setInterval(() => { if (auth && sync && document.visibilityState === "visible") syncNow(); }, 15000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && auth && sync) syncNow(); });
+  window.addEventListener("online", () => { if (auth && sync) syncNow(); });
+  window.addEventListener("offline", paintSync);
+  window.addEventListener("storage", (e) => {   // un autre onglet du même appareil a écrit
+    if (e.key === AUTH_KEY) { auth = readJson(AUTH_KEY); paintSync(); return; }
+    if ((e.key !== STORE && e.key !== SYNC_KEY) || sheet.open) return;
+    S = load(); sync = readJson(SYNC_KEY); auth = readJson(AUTH_KEY);
+    renderAll();
+  });
+
   $("#settingsBtn").append(icon("gear"));
   applyTheme();
   renderAll();
   tick();
   setInterval(tick, 20000);
+  if (auth && sync) syncNow();
 })();
 </script>
 </body>
