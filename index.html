@@ -194,6 +194,22 @@ h2 small{font-family:var(--f-mono);font-weight:500;font-size:12px;color:var(--mu
 .tasks.sorting .task:not(.dragging){transition:transform .15s ease}
 body.is-dragging{-webkit-user-select:none;user-select:none;cursor:grabbing}
 .notes-in{min-height:120px}
+/* Temps passé (mémoire des heures) */
+.spent{display:inline-flex;align-items:center;gap:4px;font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.spent .ico{width:13px;height:13px}
+.time-box{display:flex;flex-direction:column;gap:8px}
+.time-total{margin:0;font-family:var(--f-display);font-weight:700;font-size:17px}
+.time-total.none{font-family:var(--f-body);font-weight:400;font-size:14px;color:var(--muted)}
+.time-log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.time-log li{display:flex;align-items:center;gap:10px;padding:4px 4px 4px 12px;font-size:14px;min-height:40px}
+.time-log li + li{border-top:1px solid var(--line)}
+.time-log .tl-d{flex:1;min-width:0}
+.time-log .tl-m{font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.time-log .tl-s{color:var(--muted);font-size:12.5px}
+.time-log .tl-x{flex:none;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:0}
+.time-log .tl-x:hover{background:var(--late-soft);color:var(--late)}
+.time-add{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ask-task{margin:0;font-weight:600;overflow-wrap:anywhere}
 .t-obj{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
 .dchip{border-radius:999px;padding:1px 9px;font-weight:600;font-size:12px;line-height:1.6;background:var(--k-soft,var(--sunk));color:var(--k,var(--muted));white-space:nowrap}
 .due,.dur{color:var(--muted);font-family:var(--f-mono);font-size:12px}
@@ -475,6 +491,7 @@ textarea.in{resize:vertical;min-height:48px}
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
     grip: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg>',
     note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>',
     check: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4l2.4 2.4 5.2-5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
   const $ = (s) => document.querySelector(s);
@@ -639,6 +656,17 @@ textarea.in{resize:vertical;min-height:48px}
   }
 
   const ordOf = (x) => (typeof x.o === "number" && isFinite(x.o) ? x.o : undefined);
+  /* Temps passé : une ligne par jour travaillé { d: date, m: minutes, s: source }.
+     Sources : "p" durée prévue comptée en cochant, "q" réponse à la question en cochant, "m" ajouté à la main.
+     (Plus tard : chrono du mode focus, créneau de l'agenda.) */
+  const LOG_SRC = { p: "durée prévue, en cochant", q: "en cochant", m: "ajouté à la main" };
+  const LOG_AT_CHECK = { p: true, q: true };   // retirées si la tâche est remise à faire
+  const logOf = (a) => {
+    if (!Array.isArray(a)) return undefined;
+    const out = a.filter((x) => x && validIso(x.d) && Number.isInteger(x.m) && x.m > 0 && x.m <= 1440 && LOG_SRC[x.s])
+      .slice(0, 2000).map((x) => ({ d: x.d, m: x.m, s: x.s }));
+    return out.length ? out : undefined;
+  };
   function sanitize(d) {
     const s = defaults();
     const str = (v, n) => (typeof v === "string" ? v : "").slice(0, n);
@@ -668,7 +696,8 @@ textarea.in{resize:vertical;min-height:48px}
           title: str(x.title, 300), d: dd, th: fixTh(x.th, dd), due: validIso(x.due),
           dur: (typeof x.dur === "number" && x.dur > 0 && x.dur <= 1440) ? x.dur : null,
           obj: objIds.has(x.obj) ? x.obj : null, done: !!x.done, doneAt: x.done ? (str(x.doneAt, 40) || null) : null,
-          o: ordOf(x), notes: str(x.notes, 20000) || undefined   // absents si vides : rien ne change pour les anciennes tâches
+          o: ordOf(x), notes: str(x.notes, 20000) || undefined,   // absents si vides : rien ne change pour les anciennes tâches
+          log: logOf(x.log)
         });
       });
     const thm = d.settings && d.settings.theme;
@@ -1004,6 +1033,21 @@ textarea.in{resize:vertical;min-height:48px}
   const hasExamples = () => [S.tasks, S.notes, S.ideas, S.objectives].some((a) => a.some((x) => x.ex));
   const removeNote = (id) => { S.notes = S.notes.filter((n) => n.id !== id); };
   const removeIdea = (id) => { S.ideas = S.ideas.filter((n) => n.id !== id); };
+  const spent = (t) => (t.log ? t.log.reduce((s, x) => s + x.m, 0) : 0);
+  const spentOf = (list) => list.reduce((s, t) => s + spent(t), 0);
+  function addLog(t, day, m, src) {
+    if (!t.log) t.log = [];
+    const same = src === "m" && t.log.find((x) => x.d === day && x.s === "m");   // plusieurs ajouts le même jour : une seule ligne
+    if (same) same.m = Math.min(1440, same.m + m);
+    else t.log.push({ d: day, m: m, s: src });
+  }
+  function logDayLabel(d) {
+    const dt = fromIso(d), n = dayDiff(dt, today);
+    if (n === 0) return "Aujourd'hui";
+    if (n === -1) return "Hier";
+    return cap(fWdS.format(dt)).replace(".", "") + " " + (dt.getFullYear() === today.getFullYear() ? fDM.format(dt) : fDMY.format(dt));
+  }
+  function spentBadge(m, label) { return m ? h("span", { class: "spent", title: "Temps passé" }, icon("clock"), label || durLabel(m)) : null; }
   const byDue = (a, b) => { const x = a.due || "9999-99-99", y = b.due || "9999-99-99"; return x < y ? -1 : x > y ? 1 : 0; };
   /* Ordre des tâches : la date donne l'ordre de départ, Martin l'ajuste en glissant (poignée).
      Clé de tri = t.o quand la tâche a été placée (à la main, à sa création, au changement d'échéance),
@@ -1172,11 +1216,16 @@ textarea.in{resize:vertical;min-height:48px}
           h("span", { class: "t-meta" },
             opts.noScope ? null : h("span", { class: "dchip k-" + d.color, text: scopeLabel(t) }),
             t.done ? h("span", { class: "due", text: t.due ? "Faite · " + fDM.format(fromIso(t.due)) : "Faite" }) : null,
-            t.dur ? h("span", { class: "dur", text: durLabel(t.dur) }) : null,
+            timeMeta(t),
             t.notes ? h("span", { class: "has-notes" }, icon("note"), "Notes") : null,
             o ? h("span", { class: "t-obj", text: "↳ " + o.title }) : null,
             t.ex ? h("span", { class: "tag", text: "exemple" }) : null)),
         t.done ? null : dueBox(t.due)));
+  }
+  function timeMeta(t) {   // durée prévue, ou temps passé (« 45 min / 1 h » tant que la tâche est à faire)
+    const sp = spent(t);
+    if (!sp) return t.dur ? h("span", { class: "dur", title: "Durée prévue", text: durLabel(t.dur) }) : null;
+    return spentBadge(sp, durLabel(sp) + (t.dur && !t.done ? " / " + durLabel(t.dur) : ""));
   }
   function dueBox(due) {   // date en gros à droite ; rien pour une tâche sans date
     if (!due) return null;
@@ -1225,7 +1274,7 @@ textarea.in{resize:vertical;min-height:48px}
     let armed = false, timer = null;
     b.addEventListener("click", () => {
       if (!armed) {
-        armed = true; b.textContent = confirmLabel; b.classList.add("armed");
+        armed = true; b.textContent = typeof confirmLabel === "function" ? confirmLabel() : confirmLabel; b.classList.add("armed");
         timer = setTimeout(() => { armed = false; b.textContent = label; b.classList.remove("armed"); }, 4000);
         return;
       }
@@ -1252,7 +1301,7 @@ textarea.in{resize:vertical;min-height:48px}
   function openSheet(title, nodes, actions) {
     runCloser();   // fenêtre remplacée sans être fermée
     sheetBody.textContent = "";
-    sheetBody.append(h("h3", { class: "sheet-title", id: "sheetTitle", text: title }), ...nodes, h("div", { class: "sheet-actions" }, actions));
+    sheetBody.append(h("h3", { class: "sheet-title", id: "sheetTitle", text: title }), ...nodes.filter(Boolean), h("div", { class: "sheet-actions" }, actions));
     if (!sheet.open) { if (typeof sheet.showModal === "function") sheet.showModal(); else sheet.setAttribute("open", ""); }
     sheetBody.scrollTop = 0;
   }
@@ -1333,6 +1382,38 @@ textarea.in{resize:vertical;min-height:48px}
       notesIn.addEventListener("blur", saveNotes);
     }
 
+    /* Temps passé : pour une tâche existante, enregistré tout de suite (comme les notes) */
+    let timeChanged = false, logDay = "today";
+    const timeBox = h("div", { class: "time-box" });
+    const touchTime = () => { if (task.log && !task.log.length) delete task.log; task.upd = nowIso(); save(); timeChanged = true; drawTime(); };
+    function drawTime() {
+      timeBox.textContent = "";
+      const sp = spent(task);
+      timeBox.append(h("p", { class: "time-total" + (sp ? "" : " none"), text: sp ? durLabel(sp) + " en tout" : "Rien de compté pour l'instant." }));
+      if (sp) {
+        const rows = task.log.map((x, i) => [x, i]).sort((a, b) => (a[0].d < b[0].d ? 1 : a[0].d > b[0].d ? -1 : b[1] - a[1]));
+        timeBox.append(h("ul", { class: "time-log" }, rows.map(([x]) => {
+          const lbl = logDayLabel(x.d);
+          const del = h("button", { type: "button", class: "tl-x", "aria-label": "Retirer " + durLabel(x.m) + " (" + lbl + ")", title: "Retirer" }, "×");
+          del.addEventListener("click", () => { const k = task.log.indexOf(x); if (k >= 0) task.log.splice(k, 1); touchTime(); });
+          return h("li", null, h("span", { class: "tl-d" }, lbl, " ", h("span", { class: "tl-s", text: "· " + LOG_SRC[x.s] })), h("span", { class: "tl-m", text: durLabel(x.m) }), del);
+        })));
+      }
+      const dayRow = choiceRow([{ v: "today", label: "Aujourd'hui" }, { v: "yesterday", label: "Hier" }], logDay, (v) => { logDay = v; });
+      const add = h("div", { class: "time-add" }, [15, 30, 60, 120].map((m) => {
+        const b = h("button", { type: "button", class: "act small" }, "+ " + durLabel(m));
+        b.addEventListener("click", () => {
+          if (!S.tasks.includes(task)) return;
+          addLog(task, iso(logDay === "today" ? today : addDays(today, -1)), m, "m");
+          touchTime();
+          toast(durLabel(m) + " ajoutée" + (m === 60 ? "" : "s") + (logDay === "today" ? "" : " à hier"));
+        });
+        return b;
+      }));
+      timeBox.append(h("div", { class: "time-add" }, h("span", { class: "hint", text: "Ajouter du temps pour" }), dayRow), add);
+    }
+    if (task) drawTime();
+
     const saveBtn = h("button", { type: "button", class: "primary" }, task ? "Enregistrer" : "Ajouter la tâche");
     saveBtn.addEventListener("click", () => {
       const title = titleIn.value.trim();
@@ -1353,20 +1434,22 @@ textarea.in{resize:vertical;min-height:48px}
       toast(task ? "Tâche modifiée" : "Tâche ajoutée dans " + scopeLabel(vals));
     });
     const actions = [saveBtn, cancelBtn()];
-    if (task) actions.push(h("span", { class: "spacer" }), dangerButton("Supprimer", "Confirmer la suppression", () => {
+    const delLabel = () => { const sp = task && spent(task); return sp ? "Confirmer : efface aussi " + durLabel(sp) + " de temps passé" : "Confirmer la suppression"; };
+    if (task) actions.push(h("span", { class: "spacer" }), dangerButton("Supprimer", delLabel, () => {
       S.tasks = S.tasks.filter((x) => x !== task); save(); closeSheet(); renderAll(); toast("Tâche supprimée");
     }));
     const title = task ? "Modifier la tâche" : preset.fromNote ? "Transformer la note en tâche" : preset.fromIdea ? "Transformer l'idée en tâche" : "Nouvelle tâche";
     openSheet(title, [
       field("Titre", [titleIn, err], "f-title"),
       field("Notes", task ? [notesIn, h("p", { class: "hint", text: "Enregistrées au fur et à mesure." })] : [notesIn], "f-notes"),
+      task ? field("Temps passé", [timeBox, h("p", { class: "hint", text: "Enregistré tout de suite. Une tâche peut s'étaler sur plusieurs jours." })]) : null,
       field("Domaine", [domRow]),
       field("Thème", [thF.el]),
       field("Objectif", [objSel], "f-obj"),
       field("Échéance", [dueRow, dateIn]),
       field("Durée prévue (facultatif)", [durRow])
     ], actions);
-    if (task) { sheetCloser = () => { saveNotes(); if (notesSaved) renderAll(); }; sheetFlush = saveNotes; }
+    if (task) { sheetCloser = () => { saveNotes(); if (notesSaved || timeChanged) renderAll(); }; sheetFlush = saveNotes; }
     if (!task && !preset.title) setTimeout(() => titleIn.focus(), 60);
   }
 
@@ -1802,14 +1885,14 @@ textarea.in{resize:vertical;min-height:48px}
     const next = open.filter((t) => t.due).sort(byDue)[0] || null;
     let oDone = 0, oTotal = 0;
     objs.forEach((o) => { const st = objStats(o); oDone += st.done; oTotal += st.total; });
-    return { open, objs, ideas, next, oDone, oTotal, count: tasks.length + objs.length + ideas.length };
+    return { open, objs, ideas, next, oDone, oTotal, spent: spentOf(tasks), count: tasks.length + objs.length + ideas.length };
   }
   function themeCard(d, t) {
     const st = scopeStats(d.id, t ? t.id : null);
     const di = st.next ? dueInfo(st.next.due) : null;
     return h("button", { type: "button", class: "tcard k-" + d.color + (t ? "" : " loose"), "data-act": "theme-open", "data-d": d.id, "data-id": t ? t.id : "" },
       h("span", { class: "tcard-name" }, h("span", { class: "dot" }), t ? t.label : "Sans thème"),
-      h("span", { class: "tcard-meta", text: plural(st.open.length, "tâche", "tâches") + " · " + plural(st.objs.length, "objectif", "objectifs") + " · " + plural(st.ideas.length, "idée", "idées") }),
+      h("span", { class: "tcard-meta" }, plural(st.open.length, "tâche", "tâches") + " · " + plural(st.objs.length, "objectif", "objectifs") + " · " + plural(st.ideas.length, "idée", "idées"), st.spent ? [" · ", spentBadge(st.spent)] : null),
       h("span", { class: "tcard-next", text: st.next ? di.text + " : " + st.next.title : "Aucune échéance" }),
       st.oTotal ? h("span", { class: "tprog" }, progressBar(d.color, st.oDone, st.oTotal, "Avancement des objectifs", false), h("span", { class: "val", text: st.oDone + " / " + st.oTotal })) : null);
   }
@@ -1819,7 +1902,7 @@ textarea.in{resize:vertical;min-height:48px}
       const cards = ths.map((t) => themeCard(d, t));
       if (scopeStats(d.id, null).count) cards.push(themeCard(d, null));
       box.append(h("section", { class: "dsec" },
-        h("div", { class: "dsec-h" }, h("h2", { class: "gh k-" + d.color }, h("span", { class: "dot" }), d.label), h("button", { type: "button", class: "add", "data-act": "theme-new", "data-d": d.id }, "+ Thème")),
+        h("div", { class: "dsec-h" }, h("h2", { class: "gh k-" + d.color }, h("span", { class: "dot" }), d.label, spentBadge(spentOf(S.tasks.filter((x) => x.d === d.id)))), h("button", { type: "button", class: "add", "data-act": "theme-new", "data-d": d.id }, "+ Thème")),
         cards.length ? h("div", { class: "tcards" }, cards) : h("p", { class: "empty", text: "Pas encore de thème ici. Ajoute-en un avec « + Thème »." })));
     });
   }
@@ -1831,7 +1914,7 @@ textarea.in{resize:vertical;min-height:48px}
     return h("section", { class: "panel ocard" },
       h("div", { class: "ocard-h" }, h("span", { class: "odue", text: o.due ? "Avant le " + fDMY.format(fromIso(o.due)) + " · " + jLabel(o.due) : "Sans échéance" }), o.ex ? h("span", { class: "tag", text: "exemple" }) : null, edit),
       h("h3", { class: "otitle", text: o.title }),
-      h("div", { class: "oprog" }, progressBar(d.color, st.done, st.total, o.title, true), h("span", { class: "val", text: st.total ? st.done + " / " + plural(st.total, "tâche", "tâches") : "Aucune tâche" })),
+      h("div", { class: "oprog" }, progressBar(d.color, st.done, st.total, o.title, true), h("span", { class: "val", text: st.total ? st.done + " / " + plural(st.total, "tâche", "tâches") : "Aucune tâche" }), spentBadge(spentOf(st.tasks))),
       open.length ? h("ul", { class: "tasks" }, open.map((x) => taskRow(x, rowOpts(x)))) : null,
       fin.length ? h("ul", { class: "tasks donelist" }, fin.map((x) => taskRow(x, rowOpts(x)))) : null,
       h("button", { type: "button", class: "linkbtn", "data-add": "task", "data-obj": o.id, "data-d": o.d, "data-th": o.th || "" }, "+ Ajouter une tâche"));
@@ -1862,7 +1945,7 @@ textarea.in{resize:vertical;min-height:48px}
       h("button", { type: "button", class: "add", "data-add": "task", "data-d": d.id, "data-th": thAttr }, "+ Tâche"),
       h("button", { type: "button", class: "add", "data-add": "objective", "data-d": d.id, "data-th": thAttr }, "+ Objectif"),
       h("button", { type: "button", class: "add", "data-add": "idea", "data-d": d.id, "data-th": thAttr }, "+ Idée"));
-    box.append(h("div", { class: "dash-head" }, back, crumb, edit, actions));
+    box.append(h("div", { class: "dash-head" }, back, crumb, spentBadge(spentOf(tasks)), edit, actions));
 
     const left = h("div", { class: "dash-col" });
     left.append(h("h2", { class: "vh-sm" }, h("span", { text: "Objectifs" }), h("small", { text: objs.length ? String(objs.length) : "" })));
@@ -2038,6 +2121,13 @@ textarea.in{resize:vertical;min-height:48px}
     if (!task) return;
     task.done = !task.done;
     task.doneAt = task.done ? nowIso() : null;
+    let counted = 0;
+    if (task.done) {
+      if (!spent(task) && task.dur) { addLog(task, iso(today), task.dur, "p"); counted = task.dur; }   // durée prévue comptée d'office
+    } else if (task.log) {
+      task.log = task.log.filter((x) => !LOG_AT_CHECK[x.s]);   // remise à faire : on retire ce qui avait été compté en cochant
+      if (!task.log.length) delete task.log;
+    }
     task.upd = nowIso();
     save();
     btn.setAttribute("aria-pressed", String(task.done));
@@ -2045,6 +2135,30 @@ textarea.in{resize:vertical;min-height:48px}
     if (li) li.classList.toggle("done", task.done);
     clearTimeout(rerenderTimer);
     rerenderTimer = setTimeout(renderAll, 450);
+    if (counted) toast("Temps compté : " + durLabel(counted) + " (durée prévue). Corrigeable dans la tâche.");
+    else if (task.done && !spent(task)) askTime(task);
+  }
+  /* Tâche cochée sans durée prévue ni temps compté : demander le temps passé (une touche, ou « Ne pas compter ») */
+  function askTime(task) {
+    const pick = (m) => {
+      if (S.tasks.includes(task) && task.done && !spent(task)) {
+        addLog(task, iso(today), m, "q"); task.upd = nowIso(); save();
+        toast("Temps compté : " + durLabel(m));
+      }
+      closeSheet(); renderAll();
+    };
+    const row = h("div", { class: "choices", role: "group", "aria-label": "Temps passé" }, [15, 30, 45, 60, 90, 120, 180, 240].map((m) => {
+      const b = h("button", { type: "button", class: "choice" }, durLabel(m));
+      b.addEventListener("click", () => pick(m));
+      return b;
+    }));
+    const skip = h("button", { type: "button", class: "ghost" }, "Ne pas compter");
+    skip.addEventListener("click", closeSheet);
+    openSheet("Temps passé ?", [
+      h("p", { class: "ask-task", text: task.title }),
+      row,
+      h("p", { class: "hint", text: "Pour garder la mémoire de tes heures. Tu pourras corriger dans la tâche." })
+    ], [skip]);
   }
   function handleAct(el) {
     const act = el.dataset.act, id = el.dataset.id;
