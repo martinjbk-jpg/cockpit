@@ -430,6 +430,8 @@ textarea.in{resize:vertical;min-height:48px}
 .domblock:first-child{border-top:0;padding-top:2px}
 .setrow{display:flex;gap:8px 10px;align-items:center;flex-wrap:wrap}
 .setrow .in{flex:1 1 160px;width:auto;padding:8px 10px}
+.in.mono{font-family:var(--f-mono);font-size:13px;min-width:0}
+.agkey{display:flex;flex-direction:column;gap:6px}
 .themelist{display:flex;flex-direction:column;gap:6px;padding-left:18px;border-left:2px solid var(--line);margin-left:12px}
 .throw{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .throw .in{flex:1 1 150px;width:auto;padding:6px 10px;font-size:15px}
@@ -1739,6 +1741,78 @@ textarea.in{resize:vertical;min-height:48px}
     nodes.push(form);
     return field("Synchronisation", nodes);
   }
+
+  /* Calendriers de l'iPhone : un raccourci y dépose les événements des calendriers choisis
+     (début, fin, journée entière, calendrier, lieu, titre). Il s'identifie par une clé créée ici,
+     affichée une seule fois (le serveur n'en garde que l'empreinte) ; elle ne permet que de déposer. */
+  const AG_URL = SB_URL + "/rest/v1/rpc/agenda_deposer?apikey=" + SB_KEY;
+  let agKeyShown = null;   // clé tout juste créée : visible jusqu'à la fermeture de l'appli, jamais enregistrée
+  const agendaRead = () => api("POST", "/rest/v1/rpc/agenda_lire", {});
+  function agendaStateText(info) {
+    if (!info || !info.recu_le) return "Aucun envoi reçu pour l'instant.";
+    const b = info.bilan || {}, cals = b.calendriers || {};
+    const parts = Object.keys(cals).sort().map((c) => (c || "Sans nom") + " (" + cals[c] + ")");
+    const n = Array.isArray(info.evenements) ? info.evenements.length : 0;
+    return "Dernier envoi reçu " + ago(info.recu_le) + (parts.length ? " : " + parts.join(", ") : "") +
+      (b.illisibles ? ", " + plural(b.illisibles, "ligne illisible", "lignes illisibles") : "") + ". " + plural(n, "événement gardé", "événements gardés") + ".";
+  }
+  function agendaErrText(e) {
+    if (e instanceof TypeError) return "Pas de connexion : état indisponible pour l'instant.";
+    if (e instanceof AuthError) return "Reconnecte-toi pour voir l'état.";
+    if (/PGRST202|agenda_lire/.test((e && e.message) || "")) return "Le serveur n'est pas encore prêt : la nouvelle version de supabase-schema.sql doit être collée dans Supabase.";
+    return "Lecture impossible : " + ((e && e.message) || "erreur inconnue");
+  }
+  function codeRow(value, id, label) {
+    const inp = h("input", { type: "text", class: "in mono", id: id, value: value, readonly: true, autocapitalize: "none", spellcheck: "false", "aria-label": label });
+    const sel = () => { try { inp.focus(); inp.setSelectionRange(0, inp.value.length); } catch (e) { /* sélection impossible */ } };
+    inp.addEventListener("focus", sel);
+    const b = h("button", { type: "button", class: "act small", "data-copy": id }, "Copier");
+    b.addEventListener("click", () => {
+      const done = () => toast(label + " copiée");
+      const manual = () => { sel(); let okc = false; try { okc = document.execCommand("copy"); } catch (e) { okc = false; } if (okc) done(); else toast("Texte sélectionné : copie-le à la main"); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(value).then(done, manual); else manual();
+    });
+    return h("div", { class: "setrow" }, inp, b);
+  }
+  function agendaField() {
+    const title = "Calendriers de l'iPhone";
+    if (!(sync && auth)) return field(title, [h("p", { class: "hint", text: "Connecte-toi d'abord (Synchronisation, ci-dessus) : les événements envoyés par l'iPhone arrivent sur ton compte." })]);
+    const state = h("p", { class: "hint", id: "agState", text: "Lecture de l'état…" });
+    const keyBox = h("div", { class: "agkey", id: "agKey" });
+    const drawKey = (info) => {
+      keyBox.textContent = "";
+      if (agKeyShown) {
+        keyBox.append(h("p", { class: "hint", text: "2. Clé du raccourci :" }), codeRow(agKeyShown, "f-agkey", "Clé"),
+          h("p", { class: "hint", text: "Copie-la maintenant dans le raccourci : elle ne sera plus affichée une fois l'appli fermée. Si tu la perds, crée une nouvelle clé." }));
+        return;
+      }
+      if (info === undefined) return;   // état pas encore lu
+      const has = !!(info && info.cle);
+      keyBox.append(h("p", { class: "hint", text: has ? "2. Clé du raccourci créée le " + fDMY.format(new Date(info.cle)) + " (elle n'est plus affichée)." : "2. Pas encore de clé. Crée-la sur l'iPhone, là où tu montes le raccourci, pour pouvoir la coller." }));
+      const err = h("p", { class: "err", hidden: true });
+      const make = (b) => {
+        b.disabled = true;
+        api("POST", "/rest/v1/rpc/agenda_nouvelle_cle", {}).then((k) => {
+          if (typeof k !== "string" || k.length < 20) throw new Error("réponse inattendue du serveur");
+          agKeyShown = k; drawKey(); toast("Clé créée");
+        }).catch((e) => { b.disabled = false; err.textContent = agendaErrText(e).replace("Lecture impossible", "Création impossible"); err.hidden = false; });
+      };
+      let b;
+      if (has) b = dangerButton("Nouvelle clé", "Confirmer (l'ancien raccourci cessera de marcher)", () => make(b));
+      else { b = h("button", { type: "button", class: "act small" }, "Créer la clé du raccourci"); b.addEventListener("click", () => make(b)); }
+      keyBox.append(h("div", { class: "setrow" }, b), err);
+    };
+    drawKey(undefined);
+    agendaRead().then((info) => { state.textContent = agendaStateText(info); drawKey(info); })
+      .catch((e) => { state.textContent = agendaErrText(e); state.className = "err"; drawKey(null); });
+    return field(title, [
+      h("p", { class: "hint", text: "Un raccourci de ton iPhone envoie ici les événements des calendriers que tu choisis : titre, horaires, lieu. Ni tes mots de passe ni le reste de tes calendriers ne sortent de l'iPhone." }),
+      state,
+      h("p", { class: "hint", text: "1. Adresse du raccourci :" }),
+      codeRow(AG_URL, "f-agurl", "Adresse"),
+      keyBox
+    ]);
+  }
   function openSettings() {
     const themeRow = choiceRow([{ v: "light", label: "Clair" }, { v: "dark", label: "Sombre" }, { v: "auto", label: "Comme l'appareil" }], S.settings.theme, (v) => { S.settings.theme = v; save(); applyTheme(); });
     const list = h("div", { class: "setlist" });
@@ -1780,7 +1854,7 @@ textarea.in{resize:vertical;min-height:48px}
       const last = list.querySelector(".domblock:last-child .setrow input");
       if (last) { last.focus(); last.select(); }
     });
-    const nodes = [syncField(), field("Affichage", [themeRow]), field("Domaines et thèmes", [list, addDom])];
+    const nodes = [syncField(), agendaField(), field("Affichage", [themeRow]), field("Domaines et thèmes", [list, addDom])];
     if (hasExamples()) nodes.push(field("Exemples", [
       h("p", { class: "hint", text: "Les éléments marqués « exemple » servent à découvrir l'appli. Ce que tu as ajouté toi-même est gardé." + (sync ? " Effacés ici, ils disparaissent aussi des autres appareils." : "") }),
       h("div", null, dangerButton("Effacer les exemples", "Touche encore pour confirmer", () => { clearExamples(); closeSheet(); renderAll(); toast("Exemples effacés"); }))
