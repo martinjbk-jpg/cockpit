@@ -209,6 +209,34 @@ body.is-dragging{-webkit-user-select:none;user-select:none;cursor:grabbing}
 .time-log .tl-x{flex:none;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:0}
 .time-log .tl-x:hover{background:var(--late-soft);color:var(--late)}
 .time-add{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+/* Mode focus : plein écran, aucun temps affiché pendant */
+.focus-go{display:inline-flex;align-items:center;gap:8px;align-self:flex-start;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:9px 14px;font-size:15px;font-weight:600;min-height:44px}
+.focus-go .ico{width:17px;height:17px}
+body.focus-open{overflow:hidden}
+.focus{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;padding:max(20px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+.focus[hidden]{display:none}
+.focus-in{max-width:760px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:18px}
+.focus-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.focus-top .ghost{margin-left:auto}
+.focus-state{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.pulse{width:9px;height:9px;border-radius:50%;background:var(--ok);flex:none;animation:pulse 2.4s ease-in-out infinite}
+.focus.paused .pulse,.focus-pill.paused .pulse{background:var(--muted);animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.pulse{animation:none}}
+.focus-title{margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(30px,5vw,52px);line-height:1.05;letter-spacing:-.015em;overflow-wrap:anywhere}
+.focus-notes{flex:1;display:flex;flex-direction:column;gap:6px}
+.focus-notes .lab{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.focus-notes textarea{flex:1;min-height:220px}
+.focus-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.focus-actions button{min-height:48px;font-size:15px}
+.focus-actions button:disabled{opacity:.7;cursor:default}
+.focus-end{justify-content:center}
+.focus-lead{margin:0;font-size:18px;color:var(--muted)}
+.focus-big{font-family:var(--f-mono);font-weight:500;font-size:clamp(54px,10vw,96px);line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin:0}
+.focus-on{margin:0;font-size:18px;font-weight:600;overflow-wrap:anywhere}
+.focus-pill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:9px;max-width:calc(100% - 32px);background:var(--ink);color:var(--bg);border:0;border-radius:999px;padding:11px 18px;font-weight:600;font-size:14px;box-shadow:var(--shadow-lg)}
+.focus-pill[hidden]{display:none}
+.focus-pill .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .t-obj{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
 .dchip{border-radius:999px;padding:1px 9px;font-weight:600;font-size:12px;line-height:1.6;background:var(--k-soft,var(--sunk));color:var(--k,var(--muted));white-space:nowrap}
 .due,.dur{color:var(--muted);font-family:var(--f-mono);font-size:12px}
@@ -351,7 +379,7 @@ textarea.in{resize:vertical;min-height:48px}
 
 .foot{margin:0;font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
 .foot .danger{min-height:32px;padding:4px 10px;font-size:12.5px}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));max-width:min(560px,calc(100% - 32px));background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 14px;font-size:14px;box-shadow:var(--shadow);z-index:20}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));max-width:min(560px,calc(100% - 32px));background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 14px;font-size:14px;box-shadow:var(--shadow);z-index:60}
 
 @media (max-width:1000px){
   .grid-jour{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"tasks day" "tasks horizon"}
@@ -490,6 +518,7 @@ textarea.in{resize:vertical;min-height:48px}
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
     grip: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.8"/><circle cx="15" cy="6" r="1.8"/><circle cx="9" cy="12" r="1.8"/><circle cx="15" cy="12" r="1.8"/><circle cx="9" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg>',
     note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/></svg>',
+    focus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>',
     clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>',
     check: '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 6.4l2.4 2.4 5.2-5.6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
   };
@@ -658,7 +687,7 @@ textarea.in{resize:vertical;min-height:48px}
   /* Temps passé : une ligne par jour travaillé { d: date, m: minutes, s: source }.
      Depuis le 26/11, seul "m" (ajouté à la main) est créé. "p" (durée prévue comptée en cochant) et "q" (réponse à une question
      en cochant) viennent de la version e7db195 : gardés à la lecture, retirés si la tâche est remise à faire. */
-  const LOG_SRC = { p: "durée prévue, en cochant", q: "en cochant", m: "ajouté à la main" };
+  const LOG_SRC = { p: "durée prévue, en cochant", q: "en cochant", m: "ajouté à la main", f: "focus, ajouté par toi" };
   const LOG_AT_CHECK = { p: true, q: true };   // retirées si la tâche est remise à faire
   const logOf = (a) => {
     if (!Array.isArray(a)) return undefined;
@@ -1036,7 +1065,7 @@ textarea.in{resize:vertical;min-height:48px}
   const spentOf = (list) => list.reduce((s, t) => s + spent(t), 0);
   function addLog(t, day, m, src) {
     if (!t.log) t.log = [];
-    const same = src === "m" && t.log.find((x) => x.d === day && x.s === "m");   // plusieurs ajouts le même jour : une seule ligne
+    const same = (src === "m" || src === "f") && t.log.find((x) => x.d === day && x.s === src);   // plusieurs ajouts le même jour : une seule ligne
     if (same) same.m = Math.min(1440, same.m + m);
     else t.log.push({ d: day, m: m, s: src });
   }
@@ -1433,12 +1462,23 @@ textarea.in{resize:vertical;min-height:48px}
       toast(task ? "Tâche modifiée" : "Tâche ajoutée dans " + scopeLabel(vals));
     });
     const actions = [saveBtn, cancelBtn()];
-    const delLabel = () => { const sp = task && spent(task); return sp ? "Confirmer : efface aussi " + durLabel(sp) + " de temps passé" : "Confirmer la suppression"; };
+    let focusGo = null;
+    if (task && !task.done) {   // garde les modifications de la fiche, puis passe en mode focus
+      focusGo = h("button", { type: "button", class: "focus-go" }, icon("focus"), "Mode focus");
+      focusGo.addEventListener("click", () => {
+        saveBtn.click();
+        if (sheet.open) return;   // titre vide : la fiche reste ouverte avec son message
+        $("#toast").hidden = true;
+        startFocus(task.id);
+      });
+    }
+    const delLabel =() => { const sp = task && spent(task); return sp ? "Confirmer : efface aussi " + durLabel(sp) + " de temps passé" : "Confirmer la suppression"; };
     if (task) actions.push(h("span", { class: "spacer" }), dangerButton("Supprimer", delLabel, () => {
       S.tasks = S.tasks.filter((x) => x !== task); save(); closeSheet(); renderAll(); toast("Tâche supprimée");
     }));
     const title = task ? "Modifier la tâche" : preset.fromNote ? "Transformer la note en tâche" : preset.fromIdea ? "Transformer l'idée en tâche" : "Nouvelle tâche";
     openSheet(title, [
+      focusGo,
       field("Titre", [titleIn, err], "f-title"),
       field("Notes", task ? [notesIn, h("p", { class: "hint", text: "Enregistrées au fur et à mesure." })] : [notesIn], "f-notes"),
       task ? field("Temps passé", [timeBox, h("p", { class: "hint", text: "Seul le temps que tu mets ici compte (cocher la tâche n'ajoute rien). Enregistré tout de suite, jour par jour si la tâche s'étale." })]) : null,
@@ -2245,9 +2285,157 @@ textarea.in{resize:vertical;min-height:48px}
     renderAll();
   });
 
+  /* Mode focus (26/11) : aucun temps affiché pendant ; à la fin, le temps passé, comme repère.
+     Rien n'est compté d'office : Martin choisit d'ajouter ce temps à la tâche, ou non.
+     L'état vit sur l'appareil (pas synchronisé) : il survit à la fermeture de l'appli. */
+  const FOCUS_KEY = "cockpit.focus", FDAY_KEY = "cockpit.focusday";
+  const readF = () => { const f = readJson(FOCUS_KEY); return f && typeof f.id === "string" && typeof f.t0 === "number" ? f : null; };
+  const writeF = (f) => writeJson(FOCUS_KEY, f);
+  const elapsedF = (f) => Math.max(0, (f.acc || 0) + (f.run ? Date.now() - f.t0 : 0));
+  const fMs = (ms) => { const m = Math.round(ms / 60000); return m >= 1 ? durLabel(m) : "moins d'une minute"; };
+  const focusEl = h("div", { id: "focus", class: "focus", hidden: true, role: "dialog", "aria-modal": "true", "aria-labelledby": "focusTitle" });
+  const focusPill = h("button", { type: "button", id: "focusPill", class: "focus-pill", hidden: true });
+  document.body.append(focusEl, focusPill);
+  focusPill.addEventListener("click", openFocus);
+  let focusNotesTimer = null;
+
+  function startFocus(id) {
+    const t = S.tasks.find((x) => x.id === id);
+    if (!t) return;
+    const cur = readF();
+    if (cur && cur.id !== id) { openFocus(); toast("Un focus est déjà en cours : termine-le d'abord."); return; }
+    if (!cur) writeF({ id: t.id, title: t.title, t0: Date.now(), acc: 0, run: true });
+    openFocus();
+  }
+  function showFocus() { focusEl.hidden = false; focusPill.hidden = true; document.body.classList.add("focus-open"); }
+  function openFocus() {
+    const f = readF();
+    if (!f) return;
+    if (!S.tasks.some((x) => x.id === f.id)) { endFocus(); return; }   // tâche supprimée entre-temps
+    drawFocus(f);
+    showFocus();
+  }
+  function hideFocus() { focusEl.hidden = true; focusEl.textContent = ""; document.body.classList.remove("focus-open"); paintPill(); }
+  function paintPill() {
+    const f = readF();
+    focusPill.hidden = !f || !focusEl.hidden;
+    if (!f) return;
+    focusPill.className = "focus-pill" + (f.run ? "" : " paused");
+    focusPill.textContent = "";
+    focusPill.append(h("span", { class: "pulse" }), h("span", { class: "t", text: (f.run ? "Focus : " : "Focus en pause : ") + f.title }));
+    focusPill.setAttribute("aria-label", "Revenir au focus : " + f.title);
+  }
+  function flushFocusNotes() {
+    clearTimeout(focusNotesTimer); focusNotesTimer = null;
+    const ta = document.getElementById("focusNotes"), f = readF();
+    if (!ta || !f) return;
+    const t = S.tasks.find((x) => x.id === f.id);
+    if (!t) return;
+    const v = ta.value.slice(0, 20000);
+    if ((t.notes || "") === v) return;
+    if (v) t.notes = v; else delete t.notes;
+    t.upd = nowIso(); save();
+  }
+  function drawFocus(f) {
+    const t = S.tasks.find((x) => x.id === f.id);
+    if (!t) { endFocus(); return; }
+    focusEl.textContent = "";
+    focusEl.classList.toggle("paused", !f.run);
+    const notes = h("textarea", { id: "focusNotes", class: "in", placeholder: "Ce que tu fais, ce qui se dit, ce qui reste à faire…" });
+    notes.value = t.notes || "";
+    notes.addEventListener("input", () => { clearTimeout(focusNotesTimer); focusNotesTimer = setTimeout(flushFocusNotes, 700); });
+    notes.addEventListener("blur", flushFocusNotes);
+    const minB = h("button", { type: "button", class: "ghost" }, "Réduire");
+    minB.addEventListener("click", () => { flushFocusNotes(); hideFocus(); renderAll(); });
+    const endB = h("button", { type: "button", class: "primary" }, "Terminer");
+    endB.addEventListener("click", endFocus);
+    const pauseB = h("button", { type: "button", class: "act" }, f.run ? "Pause" : "Reprendre");
+    pauseB.addEventListener("click", () => {
+      flushFocusNotes();
+      const g = readF();
+      if (!g) return;
+      if (g.run) { g.acc = elapsedF(g); g.run = false; } else { g.t0 = Date.now(); g.run = true; }
+      writeF(g);
+      drawFocus(g);
+    });
+    focusEl.append(h("div", { class: "focus-in" },
+      h("div", { class: "focus-top" },
+        h("span", { class: "focus-state" }, h("span", { class: "pulse" }), f.run ? "Focus en cours" : "En pause"),
+        h("span", { class: "dchip k-" + dom(t.d).color, text: scopeLabel(t) }),
+        minB),
+      h("h2", { class: "focus-title", id: "focusTitle", text: t.title }),
+      h("div", { class: "focus-notes" },
+        h("label", { class: "lab", for: "focusNotes", text: "Notes" }),
+        notes,
+        h("p", { class: "hint", text: "Enregistrées au fur et à mesure, dans la tâche. Le temps n'est pas affiché : tu le verras en terminant." })),
+      h("div", { class: "focus-actions" }, endB, pauseB)));
+  }
+  function endFocus() {
+    flushFocusNotes();
+    const f = readF();
+    if (!f) { hideFocus(); return; }
+    const ms = elapsedF(f);
+    writeF(null);
+    let day = readJson(FDAY_KEY);   // repère du jour, sur cet appareil seulement
+    if (!day || day.d !== iso(today) || typeof day.ms !== "number") day = { d: iso(today), ms: 0 };
+    day.ms += ms;
+    writeJson(FDAY_KEY, day);
+    drawEnd(f, ms, day.ms);
+    showFocus();
+  }
+  function drawEnd(f, ms, dayMs) {
+    const m = Math.min(1440, Math.round(ms / 60000));
+    const t = S.tasks.find((x) => x.id === f.id);
+    focusEl.textContent = "";
+    focusEl.classList.remove("paused");
+    const acts = h("div", { class: "focus-actions" });
+    if (t && m >= 1) {
+      const addB = h("button", { type: "button", class: "act" }, "Ajouter " + durLabel(m) + " au temps de la tâche");
+      addB.addEventListener("click", () => {
+        const tt = S.tasks.find((x) => x.id === f.id);
+        if (!tt || addB.disabled) return;
+        addLog(tt, iso(today), m, "f"); tt.upd = nowIso(); save();
+        addB.disabled = true; addB.textContent = "✓ " + durLabel(m) + " ajouté" + (m === 60 ? "e" : "es") + " à la tâche";
+      });
+      acts.append(addB);
+    }
+    if (t && !t.done) {
+      const doneB = h("button", { type: "button", class: "act" }, "Marquer la tâche comme faite");
+      doneB.addEventListener("click", () => {
+        const tt = S.tasks.find((x) => x.id === f.id);
+        if (!tt || doneB.disabled) return;
+        if (!tt.done) { tt.done = true; tt.doneAt = nowIso(); tt.upd = nowIso(); save(); }
+        doneB.disabled = true; doneB.textContent = "✓ Tâche faite";
+      });
+      acts.append(doneB);
+    }
+    const closeB = h("button", { type: "button", class: "primary" }, "Fermer");
+    closeB.addEventListener("click", () => { hideFocus(); renderAll(); });
+    acts.append(closeB);
+    focusEl.append(h("div", { class: "focus-in focus-end" },
+      h("span", { class: "focus-state", text: "Focus terminé" }),
+      h("p", { class: "focus-lead", text: "Tu as passé" }),
+      h("p", { class: "focus-big", id: "focusTitle", text: fMs(ms) }),
+      h("p", { class: "focus-on", text: "sur « " + (t ? t.title : f.title) + " »" }),
+      ms > 3 * 3600000 ? h("p", { class: "hint", text: "C'est long : le focus a peut-être tourné sans toi. Rien n'est compté tant que tu ne l'ajoutes pas." }) : null,
+      h("p", { class: "hint", text: "Rien n'est compté d'office : c'est toi qui choisis d'ajouter ce temps à la tâche." }),
+      acts,
+      h("p", { class: "hint", text: "Focus aujourd'hui, sur cet appareil : " + fMs(dayMs) })));
+    setTimeout(() => closeB.focus({ preventScroll: true }), 60);
+  }
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Escape" || focusEl.hidden || sheet.open) return;
+    ev.preventDefault();
+    flushFocusNotes();
+    hideFocus();
+    renderAll();
+  });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushFocusNotes(); });
+
   $("#settingsBtn").append(icon("gear"));
   applyTheme();
   renderAll();
+  if (readF()) openFocus();   // un focus était en cours quand l'appli a été fermée
   tick();
   setInterval(tick, 20000);
   if (auth && sync) syncNow();
