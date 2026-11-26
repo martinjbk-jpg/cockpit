@@ -209,7 +209,6 @@ body.is-dragging{-webkit-user-select:none;user-select:none;cursor:grabbing}
 .time-log .tl-x{flex:none;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:0}
 .time-log .tl-x:hover{background:var(--late-soft);color:var(--late)}
 .time-add{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.ask-task{margin:0;font-weight:600;overflow-wrap:anywhere}
 .t-obj{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
 .dchip{border-radius:999px;padding:1px 9px;font-weight:600;font-size:12px;line-height:1.6;background:var(--k-soft,var(--sunk));color:var(--k,var(--muted));white-space:nowrap}
 .due,.dur{color:var(--muted);font-family:var(--f-mono);font-size:12px}
@@ -657,8 +656,8 @@ textarea.in{resize:vertical;min-height:48px}
 
   const ordOf = (x) => (typeof x.o === "number" && isFinite(x.o) ? x.o : undefined);
   /* Temps passé : une ligne par jour travaillé { d: date, m: minutes, s: source }.
-     Sources : "p" durée prévue comptée en cochant, "q" réponse à la question en cochant, "m" ajouté à la main.
-     (Plus tard : chrono du mode focus, créneau de l'agenda.) */
+     Depuis le 26/11, seul "m" (ajouté à la main) est créé. "p" (durée prévue comptée en cochant) et "q" (réponse à une question
+     en cochant) viennent de la version e7db195 : gardés à la lecture, retirés si la tâche est remise à faire. */
   const LOG_SRC = { p: "durée prévue, en cochant", q: "en cochant", m: "ajouté à la main" };
   const LOG_AT_CHECK = { p: true, q: true };   // retirées si la tâche est remise à faire
   const logOf = (a) => {
@@ -1442,7 +1441,7 @@ textarea.in{resize:vertical;min-height:48px}
     openSheet(title, [
       field("Titre", [titleIn, err], "f-title"),
       field("Notes", task ? [notesIn, h("p", { class: "hint", text: "Enregistrées au fur et à mesure." })] : [notesIn], "f-notes"),
-      task ? field("Temps passé", [timeBox, h("p", { class: "hint", text: "Enregistré tout de suite. Une tâche peut s'étaler sur plusieurs jours." })]) : null,
+      task ? field("Temps passé", [timeBox, h("p", { class: "hint", text: "Seul le temps que tu mets ici compte (cocher la tâche n'ajoute rien). Enregistré tout de suite, jour par jour si la tâche s'étale." })]) : null,
       field("Domaine", [domRow]),
       field("Thème", [thF.el]),
       field("Objectif", [objSel], "f-obj"),
@@ -2121,11 +2120,10 @@ textarea.in{resize:vertical;min-height:48px}
     if (!task) return;
     task.done = !task.done;
     task.doneAt = task.done ? nowIso() : null;
-    let counted = 0;
-    if (task.done) {
-      if (!spent(task) && task.dur) { addLog(task, iso(today), task.dur, "p"); counted = task.dur; }   // durée prévue comptée d'office
-    } else if (task.log) {
-      task.log = task.log.filter((x) => !LOG_AT_CHECK[x.s]);   // remise à faire : on retire ce qui avait été compté en cochant
+    // Cocher ne compte rien (décision du 26/11 : seul le temps mis à la main compte).
+    // Remise à faire : on retire le temps qu'une version précédente avait compté en cochant.
+    if (!task.done && task.log) {
+      task.log = task.log.filter((x) => !LOG_AT_CHECK[x.s]);
       if (!task.log.length) delete task.log;
     }
     task.upd = nowIso();
@@ -2135,30 +2133,6 @@ textarea.in{resize:vertical;min-height:48px}
     if (li) li.classList.toggle("done", task.done);
     clearTimeout(rerenderTimer);
     rerenderTimer = setTimeout(renderAll, 450);
-    if (counted) toast("Temps compté : " + durLabel(counted) + " (durée prévue). Corrigeable dans la tâche.");
-    else if (task.done && !spent(task)) askTime(task);
-  }
-  /* Tâche cochée sans durée prévue ni temps compté : demander le temps passé (une touche, ou « Ne pas compter ») */
-  function askTime(task) {
-    const pick = (m) => {
-      if (S.tasks.includes(task) && task.done && !spent(task)) {
-        addLog(task, iso(today), m, "q"); task.upd = nowIso(); save();
-        toast("Temps compté : " + durLabel(m));
-      }
-      closeSheet(); renderAll();
-    };
-    const row = h("div", { class: "choices", role: "group", "aria-label": "Temps passé" }, [15, 30, 45, 60, 90, 120, 180, 240].map((m) => {
-      const b = h("button", { type: "button", class: "choice" }, durLabel(m));
-      b.addEventListener("click", () => pick(m));
-      return b;
-    }));
-    const skip = h("button", { type: "button", class: "ghost" }, "Ne pas compter");
-    skip.addEventListener("click", closeSheet);
-    openSheet("Temps passé ?", [
-      h("p", { class: "ask-task", text: task.title }),
-      row,
-      h("p", { class: "hint", text: "Pour garder la mémoire de tes heures. Tu pourras corriger dans la tâche." })
-    ], [skip]);
   }
   function handleAct(el) {
     const act = el.dataset.act, id = el.dataset.id;
